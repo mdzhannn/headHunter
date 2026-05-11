@@ -13,7 +13,10 @@ public interface ResumeService {
     ResumeDto getResumeById(Long id);
 
     void addFilesToResume(Long id, List<MultipartFile> files);
-    void verifyResume(Long resumeId);
 
     List<ResumeDto> getPendingResumes();
+
+    ResumeDto approveResume(Long id);
+
+    ResumeDto rejectResume(Long id, String reason);
 }

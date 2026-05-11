@@ -31,6 +31,8 @@ public class ResumeDto {
     private String languages;
     private LocalDateTime createDate;
     private String status;
-    private boolean isVerify;
+    private String photoUrl;
+    private ModerationStatus moderationStatus;
+    private String rejectionReason;
 
 }

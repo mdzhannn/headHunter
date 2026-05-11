@@ -23,5 +23,7 @@ public class VacancyDto {
     private String aboutVacancy;
     private LocalDateTime createDate;
     private String status;
-    private boolean isVerify;
+    private ModerationStatus moderationStatus;
+    private String rejectionReason;
+    private Long companyId;
 }

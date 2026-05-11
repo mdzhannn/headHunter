@@ -27,10 +27,43 @@ public class Vacancy {
     private String aboutVacancy;
     private LocalDateTime createDate;
     private String status;
-    private boolean isVerify;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private ModerationStatus moderationStatus = ModerationStatus.PENDING;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "is_verify", nullable = false)
+    private Boolean isVerify = false;
 
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @PrePersist
+    void prePersist() {
+        if (createDate == null) {
+            createDate = LocalDateTime.now();
+        }
+        if (moderationStatus == null) {
+            moderationStatus = ModerationStatus.PENDING;
+        }
+        if (isVerify == null) {
+            isVerify = false;
+        }
+    }
+
+    @PostLoad
+    void normalizeModeration() {
+        if (moderationStatus == null) {
+            moderationStatus = ModerationStatus.PENDING;
+        }
+    }
 
 }

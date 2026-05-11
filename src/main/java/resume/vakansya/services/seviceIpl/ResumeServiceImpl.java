@@ -1,10 +1,9 @@
 package resume.vakansya.services.seviceIpl;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import resume.vakansya.entities.File;
+import resume.vakansya.entities.ModerationStatus;
 import resume.vakansya.entities.Resume;
 import resume.vakansya.entities.ResumeDto;
 import resume.vakansya.mappers.ResumeMapper;
@@ -12,23 +11,28 @@ import resume.vakansya.repositories.ResumeRepository;
 import resume.vakansya.services.ResumeService;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ResumeServiceImpl implements ResumeService {
-    @Autowired
+
     private final ResumeMapper resumeMapper;
-    @Autowired
     private final ResumeRepository resumeRepository;
+
+    public ResumeServiceImpl(ResumeMapper resumeMapper, ResumeRepository resumeRepository) {
+        this.resumeMapper = resumeMapper;
+        this.resumeRepository = resumeRepository;
+    }
+
     @Override
     public List<ResumeDto> getAllResume() {
         return resumeMapper.mapToDtoList(resumeRepository.findAll());
     }
+
     @Override
     public ResumeDto addResume(ResumeDto addResume) {
         Resume resume = resumeMapper.mapToEntity(addResume);
-        Resume resumeOne = resumeRepository.save(resume);
-        return resumeMapper.mapToDto(resumeOne);
+        Resume saved = resumeRepository.save(resume);
+        return resumeMapper.mapToDto(saved);
     }
 
     @Override
@@ -38,8 +42,10 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Override
     public ResumeDto updateResume(ResumeDto updResume) {
-        Resume resume = resumeMapper.mapToEntity(updResume);
-        return resumeMapper.mapToDto(resumeRepository.save(resume));
+        Resume existing = resumeRepository.findById(updResume.getId())
+                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + updResume.getId()));
+        resumeMapper.updateResumeFromDto(updResume, existing);
+        return resumeMapper.mapToDto(resumeRepository.save(existing));
     }
 
     @Override
@@ -76,33 +82,29 @@ public class ResumeServiceImpl implements ResumeService {
         }
         resumeRepository.save(resume);
     }
-    @Autowired
-    public ResumeServiceImpl(ResumeMapper resumeMapper, ResumeRepository resumeRepository) {
-        this.resumeMapper = resumeMapper;
-        this.resumeRepository = resumeRepository;
-    }
-
-    @Override
-    public void verifyResume(Long resumeId) {
-        Resume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
-        resume.setVerify(true);
-        resumeRepository.save(resume);
-    }
 
     @Override
     public List<ResumeDto> getPendingResumes() {
-        List<Resume> pendingResumes = resumeRepository.findByIsVerifyFalse();
-        return pendingResumes.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        return resumeMapper.mapToDtoList(resumeRepository.findPendingOrLegacy());
     }
 
-    private ResumeDto convertToDto(Resume resume) {
-        ResumeDto resumeDto = new ResumeDto();
-        resumeDto.setId(resume.getId());
-        resumeDto.setVerify(resume.isVerify());
-        // Заполнение остальных полей DTO
-        return resumeDto;
+    @Override
+    @Transactional
+    public ResumeDto approveResume(Long id) {
+        Resume resume = resumeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + id));
+        resume.setModerationStatus(ModerationStatus.APPROVED);
+        resume.setRejectionReason(null);
+        return resumeMapper.mapToDto(resumeRepository.save(resume));
+    }
+
+    @Override
+    @Transactional
+    public ResumeDto rejectResume(Long id, String reason) {
+        Resume resume = resumeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + id));
+        resume.setModerationStatus(ModerationStatus.REJECTED);
+        resume.setRejectionReason(reason != null ? reason : "");
+        return resumeMapper.mapToDto(resumeRepository.save(resume));
     }
 }

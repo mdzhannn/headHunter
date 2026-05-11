@@ -42,12 +42,45 @@ public class Resume {
     private String languages;
     private LocalDateTime createDate;
     private String status;
-    private boolean isVerify;
+
+    @Column(columnDefinition = "TEXT")
+    private String photoUrl;
+
+    @Column(name = "is_verify", nullable = false)
+    private Boolean isVerify = Boolean.FALSE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private ModerationStatus moderationStatus = ModerationStatus.PENDING;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
     @OneToMany(mappedBy = "resume", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<File> files = new ArrayList<>();
+
+    @PrePersist
+    void prePersist() {
+        if (createDate == null) {
+            createDate = LocalDateTime.now();
+        }
+        if (moderationStatus == null) {
+            moderationStatus = ModerationStatus.PENDING;
+        }
+        if (isVerify == null) {
+            isVerify = Boolean.FALSE;
+        }
+    }
+
+    @PostLoad
+    void normalizeModeration() {
+        if (moderationStatus == null) {
+            moderationStatus = ModerationStatus.PENDING;
+        }
+    }
 
 
 

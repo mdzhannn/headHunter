@@ -17,5 +17,7 @@ public class UserDto {
     private String password;
     private LocalDateTime createDate;
     private boolean isActive;
+    private String roleName;
+    private String adminRoleName;
 
 }

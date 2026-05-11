@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import resume.vakansya.services.INotificationService;
 
 @RestController
+@CrossOrigin(origins = {"http://localhost:5173", "http://127.0.0.1:5173"})
 @RequestMapping("/email")
 public class NotificationController {
 
