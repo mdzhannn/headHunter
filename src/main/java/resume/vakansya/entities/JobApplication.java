@@ -42,6 +42,10 @@ public class JobApplication {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    /** JSON снимка резюме на момент отклика (чтобы видеть «что было отправлено»). */
+    @Column(name = "resume_snapshot", columnDefinition = "TEXT")
+    private String resumeSnapshot;
+
     @PrePersist
     void prePersist() {
         if (createdAt == null) {

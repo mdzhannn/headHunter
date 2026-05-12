@@ -1,3 +1,4 @@
+import type { CandidateResumeDto } from '../candidate/candidateApi';
 import { fetchWithAuth } from '../candidate/auth';
 
 export interface EmployerCompanyDto {
@@ -24,7 +25,21 @@ export interface EmployerVacancyDto {
   rejectionReason?: string | null;
 }
 
+export interface EmployerApplicationItemDto {
+  id: number;
+  vacancyId: number | null;
+  vacancyTitle: string | null;
+  createdAt: string | null;
+  status: string | null;
+  resumeAtApply: CandidateResumeDto | null;
+  conversationId?: number | null;
+}
+
 export const employerApi = {
+  listResumes: () => fetchWithAuth<CandidateResumeDto[]>('/employer/resumes'),
+  listApplications: () => fetchWithAuth<EmployerApplicationItemDto[]>('/employer/applications'),
+  repairConversations: () =>
+    fetchWithAuth<{ created: number; message: string }>('/employer/applications/repair-conversations', { method: 'POST' }),
   getMyCompany: () => fetchWithAuth<EmployerCompanyDto | null>('/employer/company'),
   saveMyCompany: (body: EmployerCompanyDto) =>
     fetchWithAuth<EmployerCompanyDto>('/employer/company', {

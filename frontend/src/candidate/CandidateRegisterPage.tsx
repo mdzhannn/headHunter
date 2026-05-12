@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Btn, Input, Toast } from '../components/ui';
+import { Btn, Input, PhoneInput, Toast } from '../components/ui';
 import { candidateApi } from './candidateApi';
 import { useAuth } from './AuthContext';
 
@@ -125,7 +125,7 @@ export default function CandidateRegisterPage() {
     photoUrl: '',
     name: '',
     surname: '',
-    phone: '',
+    phone: '+7',
     position: '',
   });
 
@@ -190,7 +190,7 @@ export default function CandidateRegisterPage() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="font-bold text-xl text-[#2557a7]">hh.kz</div>
+          <div className="font-bold text-xl text-[#2557a7]">job.kz</div>
           <button
             type="button"
             className="text-sm text-slate-500 hover:text-slate-700 hover:underline"
@@ -260,11 +260,10 @@ export default function CandidateRegisterPage() {
                 value={s1.surname}
                 onChange={(e) => f1('surname', e.target.value)}
               />
-              <Input
+              <PhoneInput
                 label="Телефон"
-                placeholder="+7 777 000 00 00"
                 value={s1.phone}
-                onChange={(e) => f1('phone', e.target.value)}
+                onChange={(v) => f1('phone', v)}
               />
               <Input
                 label="Желаемая должность *"

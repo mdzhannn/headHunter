@@ -57,7 +57,7 @@ function StatSkeleton() {
 }
 
 export default function CandidateLandingPage() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const resumeHref = token ? '/app/profile' : '/app/signup';
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [vacancies, setVacancies] = useState<CandidateVacancyDto[]>([]);
@@ -109,7 +109,7 @@ export default function CandidateLandingPage() {
     <div className="min-h-screen bg-white text-slate-900">
       <header className="border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="font-bold text-xl tracking-tight text-[#2557a7]">hh.kz</div>
+          <div className="font-bold text-xl tracking-tight text-[#2557a7]">job.kz</div>
 
           <div className="mx-auto bg-slate-100 rounded-full p-1 text-sm hidden md:flex">
             <button className="px-4 py-1.5 rounded-full bg-white shadow-sm font-medium text-[#2557a7]">
@@ -122,9 +122,24 @@ export default function CandidateLandingPage() {
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3 text-sm">
             <span className="hidden sm:inline text-slate-600">📍 Алматы</span>
-            <Link to="/app/login" className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
-              Войти
-            </Link>
+            {token ? (
+              <>
+                <Link to="/app/messages" className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
+                  Сообщения
+                </Link>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 hover:bg-slate-50"
+                  onClick={() => logout()}
+                >
+                  Выйти
+                </button>
+              </>
+            ) : (
+              <Link to="/app/login" className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
+                Войти
+              </Link>
+            )}
             <Link
               to={resumeHref}
               className="px-3 py-1.5 rounded-lg text-white font-medium"

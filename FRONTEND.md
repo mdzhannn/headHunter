@@ -52,7 +52,7 @@ npm run preview
 - `/resume`
 - `/vacancy`
 - `/vacancies`
-- `/email`
+- `/email` (backend endpoint, раздел Email удалён из admin-навигации)
 - `/admin`
 - `/auth`
 - `/candidate`
@@ -165,6 +165,7 @@ npm run preview
 - чат:
   - `getConversations`
   - `getUnreadTotal`
+  - `getConversationDetail` — детали диалога + сообщения + meta (employerUserId, candidateUserId)
   - `getMessages`
   - `markConversationRead`
 
@@ -188,7 +189,8 @@ npm run preview
 
 ## 10) UI и состояние
 
-- Базовые UI-компоненты: `Btn`, `Input`, `Card`, `Toast`, `Modal`, `Spinner`, `Badge`.
+- Базовые UI-компоненты: `Btn`, `Input`, `PhoneInput`, `Card`, `Toast`, `Modal`, `Spinner`, `Badge`.
+- `PhoneInput` — умное поле телефона: фиксированный префикс `+7`, только цифры после него.
 - На страницах используется локальный state через `useState`/`useEffect`.
 - Ошибки API показываются через toast-сообщения.
 - В критичных местах есть `disabled` и лоадеры для защиты от повторных запросов.

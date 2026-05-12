@@ -38,6 +38,65 @@ export function Input({ label, error, className = '', ...p }: InputProps) {
   );
 }
 
+/* ── PhoneInput ── */
+interface PhoneInputProps {
+  label?: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  className?: string;
+}
+export function PhoneInput({ label, value, onChange, disabled, className = '' }: PhoneInputProps) {
+  const PREFIX = '+7';
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    // Strip everything except digits from the part after +7
+    if (!raw.startsWith(PREFIX)) {
+      const digits = raw.replace(/\D/g, '');
+      onChange(PREFIX + digits);
+      return;
+    }
+    const afterPrefix = raw.slice(PREFIX.length).replace(/\D/g, '');
+    onChange(PREFIX + afterPrefix);
+  };
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Prevent deleting the +7 prefix
+    const input = e.currentTarget;
+    if ((e.key === 'Backspace' || e.key === 'Delete') && input.selectionStart !== null && input.selectionStart <= PREFIX.length && input.selectionEnd !== null && input.selectionEnd <= PREFIX.length) {
+      e.preventDefault();
+    }
+  };
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Move cursor after +7 if it's at the start
+    if (e.currentTarget.selectionStart !== null && e.currentTarget.selectionStart < PREFIX.length) {
+      setTimeout(() => e.target.setSelectionRange(PREFIX.length, PREFIX.length), 0);
+    }
+  };
+  const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {
+    if (e.currentTarget.selectionStart !== null && e.currentTarget.selectionStart < PREFIX.length) {
+      e.currentTarget.setSelectionRange(PREFIX.length, PREFIX.length);
+    }
+  };
+  return (
+    <div className="flex flex-col gap-1">
+      {label && <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</label>}
+      <input
+        type="tel"
+        value={value || PREFIX}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onClick={handleClick}
+        disabled={disabled}
+        placeholder="+7XXXXXXXXXX"
+        className={`w-full px-3 py-2 text-sm bg-white border rounded-lg outline-none transition
+          border-slate-200 text-slate-800 placeholder-slate-400
+          focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 ${className}`}
+      />
+    </div>
+  );
+}
+
 /* ── Badge ── */
 export function Badge({ children, color = 'slate' }: { children: React.ReactNode; color?: 'slate' | 'green' | 'red' | 'amber' | 'indigo' }) {
   const c = {

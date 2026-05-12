@@ -42,7 +42,9 @@ export default function CandidateLoginPage() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 shadow-md border-slate-200">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-[#2557a7] text-white font-bold text-lg flex items-center justify-center mx-auto mb-3">hh</div>
+          <div className="w-14 h-14 rounded-xl bg-[#2557a7] text-white font-bold text-base flex items-center justify-center mx-auto mb-3 tracking-tight">
+            job.kz
+          </div>
           <h1 className="text-xl font-semibold text-slate-900">Вход</h1>
           <p className="text-sm text-slate-500 mt-1">Войдите по email и паролю</p>
         </div>
@@ -55,6 +57,7 @@ export default function CandidateLoginPage() {
             onChange={e => setEmail(e.target.value)}
             disabled={loading}
             autoComplete="email"
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
           />
           <Input
             label="Пароль"
@@ -64,13 +67,14 @@ export default function CandidateLoginPage() {
             onChange={e => setPassword(e.target.value)}
             disabled={loading}
             autoComplete="current-password"
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
           />
           <div className="text-right -mt-2">
             <Link to="/app/forgot-password" className="text-sm text-[#2557a7] hover:underline">
               Забыли пароль?
             </Link>
           </div>
-          <Btn variant="primary" className="w-full !bg-[#2557a7] !border-[#2557a7] hover:!bg-[#1f4a91]" onClick={handleLogin} disabled={loading || !email.trim() || !password.trim()}>
+          <Btn variant="primary" className="w-full !bg-[#2557a7] !border-[#2557a7] hover:!bg-[#1f4a91] justify-center" onClick={handleLogin} disabled={loading || !email.trim() || !password.trim()}>
             {loading ? 'Вход...' : 'Войти'}
           </Btn>
           <p className="text-sm text-slate-500 text-center">

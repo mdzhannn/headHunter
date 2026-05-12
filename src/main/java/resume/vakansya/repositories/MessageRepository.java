@@ -13,6 +13,8 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     List<Message> findByConversation_IdOrderByCreatedAtAsc(long conversationId);
 
+    boolean existsByConversation_Id(long conversationId);
+
     long countByConversation_IdAndSenderIdNotAndReadAtIsNull(long conversationId, long excludedSenderId);
 
     @Query("""

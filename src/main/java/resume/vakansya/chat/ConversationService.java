@@ -6,6 +6,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import resume.vakansya.chat.dto.ConversationDetailDto;
 import resume.vakansya.chat.dto.ConversationListItemDto;
 import resume.vakansya.chat.dto.MessageItemDto;
 import resume.vakansya.chat.dto.UnreadTotalDto;
@@ -33,7 +34,11 @@ public class ConversationService {
         if (conversationRepository.findByApplication_Id(app.getId()).isPresent()) {
             return;
         }
-        User employer = app.getVacancy().getUser();
+        Vacancy v = app.getVacancy();
+        User employer = v.getUser();
+        if (employer == null && v.getCompany() != null && v.getCompany().getOwner() != null) {
+            employer = v.getCompany().getOwner();
+        }
         if (employer == null) {
             return;
         }
@@ -73,6 +78,9 @@ public class ConversationService {
             Vacancy v = app.getVacancy();
             User candUser = app.getUser();
             User vacUser = v.getUser();
+            if (vacUser == null && v.getCompany() != null && v.getCompany().getOwner() != null) {
+                vacUser = v.getCompany().getOwner();
+            }
             boolean imCandidate = userId == c.getCandidateUserId();
             String counterparty = imCandidate
                     ? (vacUser != null && vacUser.getUserName() != null ? vacUser.getUserName() : "Работодатель")
@@ -106,6 +114,37 @@ public class ConversationService {
         return list;
     }
 
+    @Transactional(readOnly = true)
+    public ConversationDetailDto getDetail(long conversationId, long userId) {
+        Conversation c = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found"));
+        requireParticipant(conversationId, userId);
+
+        JobApplication app = c.getApplication();
+        Vacancy v = app.getVacancy();
+        User candUser = app.getUser();
+        User vacUser = v.getUser();
+        if (vacUser == null && v.getCompany() != null && v.getCompany().getOwner() != null) {
+            vacUser = v.getCompany().getOwner();
+        }
+        boolean imCandidate = userId == c.getCandidateUserId();
+        String counterparty = imCandidate
+                ? (vacUser != null && vacUser.getUserName() != null ? vacUser.getUserName() : "Работодатель")
+                : (candUser.getUserName() != null ? candUser.getUserName() : "Соискатель");
+
+        List<MessageItemDto> messages = messageRepository
+                .findByConversation_IdOrderByCreatedAtAsc(conversationId)
+                .stream().map(ConversationService::toDto).toList();
+
+        return new ConversationDetailDto(
+                c.getId(),
+                c.getEmployerUserId(),
+                c.getCandidateUserId(),
+                v.getJobTitle() != null ? v.getJobTitle() : "Вакансия",
+                counterparty,
+                messages);
+    }
+
     @Transactional
     public void markRead(long conversationId, long readerId) {
         requireParticipant(conversationId, readerId);
@@ -122,6 +161,13 @@ public class ConversationService {
         if (senderUserId != c.getCandidateUserId() && senderUserId != c.getEmployerUserId()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+        // Первое сообщение может отправить только работодатель
+        boolean hasMessages = messageRepository.existsByConversation_Id(c.getId());
+        if (!hasMessages && senderUserId != c.getEmployerUserId()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Первое сообщение может отправить только работодатель");
+        }
+
         Message m = new Message();
         m.setConversation(c);
         m.setSenderId(senderUserId);

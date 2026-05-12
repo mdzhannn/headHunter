@@ -1,27 +1,29 @@
-# HeadHunter (vakansya)
+# job.kz (headHunter)
 
 Монорепозиторий с backend на Spring Boot и frontend на React (Vite) для платформы поиска работы:
-- админка (модерация резюме/вакансий, управление данными),
-- кабинет соискателя (OTP/JWT, резюме, вакансии, отклики),
-- чат соискатель <-> работодатель через WebSocket + STOMP.
+- админка (модерация резюме/вакансий/компаний, управление пользователями, audit log),
+- кабинет соискателя (регистрация по email OTP + пароль, резюме, вакансии, отклики),
+- кабинет работодателя (компания, вакансии, просмотр откликов),
+- чат соискатель ↔ работодатель через WebSocket + STOMP.
 
 ## Структура проекта
 
-- `src/main/java/resume/vakansya` — backend код (контроллеры, сервисы, сущности, security, чат)
+- `src/main/java/resume/vakansya` — backend (контроллеры, сервисы, сущности, security, чат)
 - `src/main/resources/application.properties` — конфигурация backend
-- `frontend` — frontend приложение (React + Vite + Tailwind)
+- `frontend` — frontend (React + Vite + Tailwind CSS)
 - `docker-compose.yml` — запуск PostgreSQL + backend + frontend в контейнерах
-- `Dockerfile` — контейнеризация backend
-- `frontend/Dockerfile` — контейнеризация frontend (через Nginx)
+- `Dockerfile` — сборка backend
+- `frontend/Dockerfile` — сборка frontend (Nginx)
+- `frontend/nginx.conf` — Nginx: SPA-роутинг + прокси всех API-путей на backend
 
 ## Требования
 
 - Java 17
-- Node.js 18+ и npm
-- Docker + Docker Compose (опционально, если запускать через контейнеры)
-- PostgreSQL (опционально, если не используете Docker)
+- Node.js 20+ и npm
+- Docker + Docker Compose (для запуска через контейнеры)
+- PostgreSQL (для локального запуска без Docker)
 
-## Быстрый запуск (рекомендуется через Docker)
+## Быстрый запуск через Docker
 
 Из корня проекта:
 
@@ -33,6 +35,9 @@ docker compose up --build
 - PostgreSQL: `localhost:5432` (db: `headhunter`, user: `postgres`, pass: `postgres`)
 - Backend API: `http://localhost:8080`
 - Frontend: `http://localhost:5173`
+
+> **Важно:** для работы отправки OTP-кодов по email нужно задать переменные окружения:
+> `MAIL_USERNAME`, `MAIL_PASSWORD` (например, через файл `.env` рядом с `docker-compose.yml`).
 
 Остановить:
 
@@ -52,33 +57,21 @@ docker compose down -v
 
 Поднимите PostgreSQL и создайте БД `headhunter`.
 
-Важно: по умолчанию в `application.properties` backend смотрит на:
+По умолчанию в `application.properties` backend смотрит на:
 - `jdbc:postgresql://localhost:5433/headhunter`
-- user: `postgres`
-- password: `021207`
+- user: `postgres`, password: `021207`
 
-Если у вас PostgreSQL на другом порту/пароле, измените значения в:
-- `src/main/resources/application.properties`
+Если PostgreSQL на другом порту/пароле — измените `src/main/resources/application.properties`.
 
 ### 2) Backend
-
-Из корня проекта:
 
 ```bash
 ./gradlew bootRun
 ```
 
-Проверка сборки:
-
-```bash
-./gradlew compileJava
-```
-
 Backend будет доступен на `http://localhost:8080`.
 
 ### 3) Frontend
-
-В отдельном терминале:
 
 ```bash
 cd frontend
@@ -88,42 +81,65 @@ npm run dev
 
 Frontend будет доступен на `http://localhost:5173`.
 
-Сборка фронта:
-
-```bash
-npm run build
-```
-
 ## Основные маршруты frontend
 
-- `/` — админская часть
-- `/app/login` — вход соискателя по OTP
-- `/app/cabinet` — кабинет соискателя
-- `/app/resume` — просмотр/редактирование резюме + статус модерации
-- `/app/vacancies` — лента одобренных вакансий + фильтры + отклик
-- `/app/messages` — список диалогов
-- `/app/messages/:id` — окно чата (real-time STOMP)
+| Путь | Описание |
+|------|----------|
+| `/app/login` | Вход по email + пароль |
+| `/app/signup` | Регистрация (ФИО → OTP → пароль) |
+| `/app/vacancies` | Публичная лента вакансий |
+| `/app/profile` | Кабинет соискателя (резюме + отклики) |
+| `/app/messages` | Список диалогов |
+| `/app/messages/:id` | Окно чата (real-time STOMP) |
+| `/employer` | Кабинет работодателя |
+| `/admin/dashboard` | Админ-панель |
 
 ## Основные backend API
 
-### Auth (соискатель)
+### Auth
 
-- `POST /auth/send-otp`
-- `POST /auth/verify-otp`
+| Метод | Путь | Описание |
+|-------|------|----------|
+| POST | `/auth/register/send-email-otp` | Отправка OTP на email |
+| POST | `/auth/register/verify-email-otp` | Подтверждение OTP |
+| POST | `/auth/register/complete` | Завершение регистрации (email + password) |
+| POST | `/auth/login` | Вход по email + password |
+| POST | `/auth/refresh` | Обновление access-токена |
 
-### Candidate portal
+### Соискатель
 
-- `GET /candidate/resume`
-- `PUT /candidate/resume`
-- `GET /candidate/vacancies`
-- `POST /candidate/vacancies/{vacancyId}/apply`
+| Метод | Путь | Описание |
+|-------|------|----------|
+| GET/PUT | `/candidate/resume` | Резюме |
+| GET | `/candidate/vacancies` | Список вакансий |
+| POST | `/candidate/vacancies/{id}/apply` | Отклик |
+| GET | `/candidate/applications/my` | Мои отклики |
 
-### Conversations / Chat
+### Работодатель
 
-- `GET /conversations/my`
-- `GET /conversations/unread-total`
-- `GET /conversations/{id}/messages`
-- `POST /conversations/{id}/read`
+| Метод | Путь | Описание |
+|-------|------|----------|
+| GET/PUT | `/employer/company` | Профиль компании |
+| GET/POST | `/employer/vacancies` | Вакансии |
+| GET | `/employer/applications` | Отклики на вакансии |
+
+### Чат
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| GET | `/conversations/my` | Список диалогов |
+| GET | `/conversations/{id}` | Детали диалога + сообщения |
+| POST | `/conversations/{id}/read` | Пометить прочитанным |
+
+### Админка
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| GET | `/admin/dashboard` | Статистика |
+| GET | `/admin/audit` | Audit log |
+| GET | `/admin/companies` | Компании |
+| GET | `/admin/resume/*` | Модерация резюме |
+| GET | `/admin/vacancy/*` | Модерация вакансий |
 
 ### STOMP/WebSocket
 
@@ -135,17 +151,16 @@ npm run build
 
 Файл: `src/main/resources/application.properties`
 
-- `spring.datasource.*` — подключение к БД
-- `app.auth.jwt.*` — JWT секрет и время жизни токена
-- `app.auth.otp.*` — параметры OTP (TTL, лимиты)
-- `app.sms.provider` — `dev` | `twilio` | `smsc`
-
-Для локальной разработки обычно используется:
-
-- `app.sms.provider=dev`
+| Параметр | Описание |
+|----------|----------|
+| `spring.datasource.*` | Подключение к PostgreSQL |
+| `app.auth.jwt-secret` | JWT-секрет (≥ 64 символа) |
+| `app.auth.jwt-expiration-ms` | Время жизни токена (мс) |
+| `spring.mail.*` | SMTP для OTP-писем |
+| `spring.jackson.serialization.write-dates-as-timestamps=false` | Даты в ISO формате |
 
 ## Полезно знать
 
-- Hibernate работает в режиме `ddl-auto=update`, таблицы создаются/обновляются автоматически.
-- Если меняли модель сущностей вручную, проверяйте структуру БД перед запуском.
-- Для чата и кабинета соискателя нужен валидный JWT (получается после `verify-otp`).
+- Hibernate работает в режиме `ddl-auto=update` — таблицы создаются/обновляются автоматически.
+- Первое сообщение в чате может отправить только работодатель.
+- Audit log фиксирует все POST/PUT/DELETE действия администраторов.

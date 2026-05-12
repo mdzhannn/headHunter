@@ -1,13 +1,12 @@
 import { NavLink, Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Btn } from '../components/ui';
 import { decodeJwtPayload } from './auth';
 import { useAuth } from './AuthContext';
 import { candidateApi } from './candidateApi';
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-    isActive ? 'bg-white text-[#2557a7] shadow-sm' : 'text-slate-600 hover:bg-slate-200'
+    isActive ? 'bg-white text-[#0f2557] shadow-sm' : 'text-white/80 hover:bg-white/10 hover:text-white'
   }`;
 
 export default function CandidateProtectedLayout() {
@@ -51,42 +50,72 @@ export default function CandidateProtectedLayout() {
     );
   }
 
-  // Pure employers have no candidate data — send them to their portal
   const jwtRole = (decodeJwtPayload(token)?.role as string | undefined) ?? '';
-  if (jwtRole === 'EMPLOYER') {
+  const employerMessagesOnly =
+    jwtRole === 'EMPLOYER' &&
+    (location.pathname === '/app/messages' || location.pathname.startsWith('/app/messages/'));
+  if (jwtRole === 'EMPLOYER' && !employerMessagesOnly) {
     return <Navigate to="/employer" replace />;
   }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <header className="border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 sticky top-0 z-20">
+      <header className="border-b border-[#0a1f47] bg-[#0f2557] sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-          <NavLink to="/app" className="font-bold text-xl tracking-tight text-[#2557a7]">
-            hh.kz
+          <NavLink to="/app" className="font-bold text-xl tracking-tight text-white">
+            job.kz
           </NavLink>
-          <nav className="mx-auto bg-slate-100 rounded-full p-1 text-sm hidden md:flex">
-            <NavLink to="/app/vacancies" className={linkCls}>
-              Вакансии
-            </NavLink>
-            <NavLink to="/app/profile" className={linkCls}>
-              Профиль
-            </NavLink>
-            <NavLink to="/app/messages" className={linkCls}>
-              <span className="relative pr-3">
-                Сообщения
-                {unreadTotal > 0 && (
-                  <span className="absolute -top-1 -right-2 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
-                    {unreadTotal > 99 ? '99+' : unreadTotal}
+          <nav
+            className={`mx-auto bg-white/10 rounded-full p-1 text-sm ${
+              employerMessagesOnly ? 'flex flex-wrap justify-center' : 'hidden md:flex'
+            }`}
+          >
+            {employerMessagesOnly ? (
+              <>
+                <NavLink to="/employer" className={linkCls}>
+                  Кабинет работодателя
+                </NavLink>
+                <NavLink to="/app/messages" className={linkCls}>
+                  <span className="relative pr-3">
+                    Сообщения
+                    {unreadTotal > 0 && (
+                      <span className="absolute -top-1 -right-2 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                        {unreadTotal > 99 ? '99+' : unreadTotal}
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
-            </NavLink>
+                </NavLink>
+              </>
+            ) : (
+              <>
+                <NavLink to="/app/vacancies" className={linkCls}>
+                  Вакансии
+                </NavLink>
+                <NavLink to="/app/profile" className={linkCls}>
+                  Профиль
+                </NavLink>
+                <NavLink to="/app/messages" className={linkCls}>
+                  <span className="relative pr-3">
+                    Сообщения
+                    {unreadTotal > 0 && (
+                      <span className="absolute -top-1 -right-2 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                        {unreadTotal > 99 ? '99+' : unreadTotal}
+                      </span>
+                    )}
+                  </span>
+                </NavLink>
+              </>
+            )}
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <span className="hidden sm:inline text-sm text-slate-600">📍 Алматы</span>
-            <Btn variant="ghost" size="sm" onClick={logout}>
+            <span className="hidden sm:inline text-sm text-white/80">📍 Алматы</span>
+            <button
+              type="button"
+              onClick={logout}
+              className="px-3 py-1.5 rounded-lg text-sm text-white border border-white/30 hover:bg-white/10"
+            >
               Выйти
-            </Btn>
+            </button>
           </div>
         </div>
       </header>
@@ -94,7 +123,7 @@ export default function CandidateProtectedLayout() {
         <Outlet />
       </main>
       <footer className="border-t border-slate-200 py-6 text-center text-sm text-slate-500">
-        © hh.kz clone
+        © job.kz
       </footer>
     </div>
   );

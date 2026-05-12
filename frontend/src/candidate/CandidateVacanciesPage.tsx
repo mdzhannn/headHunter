@@ -59,7 +59,7 @@ function VacancyCardSkeleton() {
 
 export default function CandidateVacanciesPage() {
   const nav = useNavigate();
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [applied, setApplied] = useState<Filters>(initialFilters);
   const [list, setList] = useState<CandidateVacancyDto[]>([]);
@@ -107,17 +107,19 @@ export default function CandidateVacanciesPage() {
       setResumeChecked(true);
       return;
     }
-    candidateApi
-      .getResume()
-      .then((r) => {
-        if (alive) setResumeApproved(r.moderationStatus === 'APPROVED');
-      })
-      .catch(() => {
-        if (alive) setResumeApproved(false);
-      })
-      .finally(() => {
-        if (alive) setResumeChecked(true);
-      });
+    // Параллельно: проверяем резюме и загружаем уже отправленные отклики
+    Promise.all([
+      candidateApi.getResume().catch(() => null),
+      candidateApi.getMyApplications().catch(() => []),
+    ]).then(([resume, apps]) => {
+      if (!alive) return;
+      if (resume) setResumeApproved(resume.moderationStatus === 'APPROVED');
+      const ids = new Set<number>(
+        apps.flatMap((a) => (a.vacancyId != null ? [a.vacancyId] : [])),
+      );
+      setAppliedIds(ids);
+      setResumeChecked(true);
+    });
     return () => {
       alive = false;
     };
@@ -168,24 +170,36 @@ export default function CandidateVacanciesPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col">
-      <header className="border-b border-slate-200 bg-white sticky top-0 z-20">
+      <header className="border-b border-[#0a1f47] bg-[#0f2557] sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link to="/app" className="font-bold text-xl tracking-tight text-[#2557a7]">
-            hh.kz
+          <Link to="/app" className="font-bold text-xl tracking-tight text-white">
+            job.kz
           </Link>
-          <div className="mx-auto bg-slate-100 rounded-full p-1 text-sm hidden md:flex">
-            <button className="px-4 py-1.5 rounded-full bg-white shadow-sm font-medium text-[#2557a7]">Ищу работу</button>
-            <Link to="/employer" className="px-4 py-1.5 rounded-full text-slate-600 hover:text-slate-900">
+          <div className="mx-auto bg-white/10 rounded-full p-1 text-sm hidden md:flex">
+            <button className="px-4 py-1.5 rounded-full bg-white shadow-sm font-medium text-[#0f2557]">Ищу работу</button>
+            <Link to="/employer" className="px-4 py-1.5 rounded-full text-white/80 hover:text-white">
               Ищу сотрудника
             </Link>
           </div>
           <div className="ml-auto flex items-center gap-2 text-sm">
             {isAuthed ? (
-              <Link className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50" to="/app/profile">
-                Профиль
-              </Link>
+              <>
+                <Link className="px-3 py-1.5 rounded-lg border border-white/30 text-white hover:bg-white/10" to="/app/messages">
+                  Сообщения
+                </Link>
+                <Link className="px-3 py-1.5 rounded-lg border border-white/30 text-white hover:bg-white/10" to="/app/profile">
+                  Профиль
+                </Link>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 rounded-lg border border-white/30 text-white hover:bg-white/10"
+                  onClick={() => logout()}
+                >
+                  Выйти
+                </button>
+              </>
             ) : (
-              <Link className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50" to="/app/login">
+              <Link className="px-3 py-1.5 rounded-lg border border-white/30 text-white hover:bg-white/10" to="/app/login">
                 Войти
               </Link>
             )}
@@ -196,9 +210,12 @@ export default function CandidateVacanciesPage() {
       <main className="max-w-6xl mx-auto w-full p-4 md:p-6 flex-1">
       <div className="grid grid-cols-1 lg:grid-cols-[290px_1fr] gap-4">
         <aside className="lg:sticky lg:top-20 self-start">
-          <Card className="p-4 border-slate-200 space-y-4">
-            <h2 className="text-base font-semibold text-slate-900">Фильтры</h2>
-
+          <div className="rounded-xl border border-slate-200/90 bg-white shadow-sm overflow-hidden">
+            <div className="bg-[#0f2557] px-4 py-3 border-b border-[#0a1f47]">
+              <h2 className="text-base font-semibold text-white">Фильтры</h2>
+              <p className="text-xs text-white/70 mt-0.5">Уточните параметры поиска</p>
+            </div>
+            <div className="p-4 space-y-4 bg-slate-50/60">
             <Input
               label="Поиск"
               placeholder="Профессия, должность или компания"
@@ -212,9 +229,9 @@ export default function CandidateVacanciesPage() {
               onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}
             />
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Город</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Город</p>
               <select
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg"
+                className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg text-slate-800 outline-none transition focus:border-[#0f2557] focus:ring-2 focus:ring-[#0f2557]/15"
                 value={filters.city}
                 onChange={e => setFilters(f => ({ ...f, city: e.target.value }))}
               >
@@ -227,12 +244,13 @@ export default function CandidateVacanciesPage() {
               </select>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Тип занятости</p>
-              <div className="space-y-1.5 text-sm text-slate-700">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Тип занятости</p>
+              <div className="space-y-0.5 text-sm text-slate-700">
                 {['Полная', 'Частичная', 'Удалённая'].map(type => (
-                  <label key={type} className="flex items-center gap-2">
+                  <label key={type} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 -mx-2 cursor-pointer hover:bg-white/80 transition-colors">
                     <input
                       type="checkbox"
+                      className="rounded border-slate-300 text-[#0f2557] focus:ring-[#0f2557]/30"
                       checked={filters.workTypes.includes(type)}
                       onChange={(e) =>
                         setFilters((prev) => ({
@@ -247,7 +265,7 @@ export default function CandidateVacanciesPage() {
               </div>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Зарплата</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Зарплата, ₸</p>
               <div className="grid grid-cols-2 gap-2">
                 <Input type="number" value={filters.salaryMin} onChange={e => setFilters(f => ({ ...f, salaryMin: Number(e.target.value) || 0 }))} />
                 <Input
@@ -258,12 +276,13 @@ export default function CandidateVacanciesPage() {
               </div>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Опыт работы</p>
-              <div className="space-y-1.5 text-sm text-slate-700">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Опыт работы</p>
+              <div className="space-y-0.5 text-sm text-slate-700">
                 {['без опыта', '1-3 года', '3-6 лет', '6+ лет'].map(exp => (
-                  <label key={exp} className="flex items-center gap-2">
+                  <label key={exp} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 -mx-2 cursor-pointer hover:bg-white/80 transition-colors">
                     <input
                       type="radio"
+                      className="border-slate-300 text-[#0f2557] focus:ring-[#0f2557]/30"
                       checked={filters.experience === exp}
                       onChange={() => setFilters((prev) => ({ ...prev, experience: exp }))}
                     />
@@ -273,13 +292,17 @@ export default function CandidateVacanciesPage() {
               </div>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Популярные категории</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Популярные категории</p>
               <div className="flex flex-wrap gap-1.5">
                 {categories.map((c) => (
                   <button
                     key={c}
                     type="button"
-                    className={`text-xs rounded-full px-2 py-1 border ${filters.category === c ? 'bg-blue-50 border-blue-300 text-blue-700' : 'border-slate-200 text-slate-600'}`}
+                    className={`text-xs rounded-full px-2.5 py-1 border transition-colors ${
+                      filters.category === c
+                        ? 'bg-[#0f2557] border-[#0f2557] text-white shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
                     onClick={() => setFilters((prev) => ({ ...prev, category: c }))}
                   >
                     {c}
@@ -287,15 +310,16 @@ export default function CandidateVacanciesPage() {
                 ))}
               </div>
             </div>
-            <div className="flex gap-2">
-              <Btn variant="primary" className="!bg-[#2557a7] !border-[#2557a7] flex-1" onClick={applyFilters}>
+            <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-stretch">
+              <Btn variant="primary" className="!bg-[#0f2557] !border-[#0f2557] flex-1 justify-center" onClick={applyFilters}>
                 Применить
               </Btn>
-              <Btn variant="ghost" onClick={resetFilters}>
-                Сбросить фильтры
+              <Btn variant="ghost" className="border-slate-200 text-slate-600 hover:bg-white shrink-0 justify-center" onClick={resetFilters}>
+                Сбросить
               </Btn>
             </div>
-          </Card>
+            </div>
+          </div>
         </aside>
 
         <section className="space-y-3">
@@ -320,36 +344,47 @@ export default function CandidateVacanciesPage() {
             <Card className="p-6 text-sm text-slate-500">Подходящих вакансий нет. Измените фильтры.</Card>
           ) : (
             <div className="space-y-3">
-              {list.map(item => (
-                <Card key={item.id} className="p-5 border-slate-200">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold text-lg text-slate-900">{item.jobTitle ?? 'Вакансия'}</h3>
-                      <p className="text-sm text-slate-600 mt-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs">🏢</span>
-                        {item.aboutCompany ?? 'Компания'}
-                      </p>
-                      <p className="text-sm text-emerald-700 font-semibold mt-2">{fmtMoney(item.salary)}</p>
-                      <div className="flex flex-wrap gap-2 mt-2 text-xs text-slate-600">
-                        {item.location && <span className="bg-slate-100 px-2 py-0.5 rounded">{item.location}</span>}
-                        {item.workType && <span className="bg-slate-100 px-2 py-0.5 rounded">{item.workType}</span>}
-                        {item.experience && <span className="bg-slate-100 px-2 py-0.5 rounded">{item.experience}</span>}
+              {list.map(item => {
+                const isApplied = appliedIds.has(item.id);
+                return (
+                  <Card key={item.id} className="p-5 border-slate-200">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-lg text-slate-900">{item.jobTitle ?? 'Вакансия'}</h3>
+                        <p className="text-sm text-slate-600 mt-1 flex items-center gap-2">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs">🏢</span>
+                          {item.aboutCompany ?? 'Компания'}
+                        </p>
+                        <p className="text-sm text-emerald-700 font-semibold mt-2">{fmtMoney(item.salary)}</p>
+                        <div className="flex flex-wrap gap-2 mt-2 text-xs text-slate-600">
+                          {item.location && <span className="bg-slate-100 px-2 py-0.5 rounded">{item.location}</span>}
+                          {item.workType && <span className="bg-slate-100 px-2 py-0.5 rounded">{item.workType}</span>}
+                          {item.experience && <span className="bg-slate-100 px-2 py-0.5 rounded">{item.experience}</span>}
+                        </div>
+                        <p className="mt-3 text-sm text-slate-600">{shortText(item.aboutVacancy || item.requirements || '')}</p>
+                        <p className="mt-2 text-xs text-slate-400">Опубликовано: {formatDate(item.createDate)}</p>
                       </div>
-                      <p className="mt-3 text-sm text-slate-600">{shortText(item.aboutVacancy || item.requirements || '')}</p>
-                      <p className="mt-2 text-xs text-slate-400">Опубликовано: {formatDate(item.createDate)}</p>
+                      <div className="flex-shrink-0">
+                        {isApplied ? (
+                          <span className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 text-slate-500 border border-slate-200 cursor-default select-none">
+                            Отклик отправлен
+                          </span>
+                        ) : (
+                          <Btn
+                            variant="primary"
+                            size="sm"
+                            className="!bg-[#2557a7] !border-[#2557a7]"
+                            disabled={applying === item.id || (isAuthed && resumeChecked && !resumeApproved)}
+                            onClick={() => applyVacancy(item.id)}
+                          >
+                            {applying === item.id ? 'Отправка...' : 'Откликнуться'}
+                          </Btn>
+                        )}
+                      </div>
                     </div>
-                    <Btn
-                      variant="primary"
-                      size="sm"
-                      className="!bg-[#2557a7] !border-[#2557a7]"
-                      disabled={applying === item.id || appliedIds.has(item.id) || (isAuthed && resumeChecked && !resumeApproved)}
-                      onClick={() => applyVacancy(item.id)}
-                    >
-                      {appliedIds.has(item.id) ? 'Отклик отправлен' : 'Откликнуться'}
-                    </Btn>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           )}
 
@@ -370,7 +405,7 @@ export default function CandidateVacanciesPage() {
       </div>
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       </main>
-      <footer className="border-t border-slate-200 py-6 text-center text-sm text-slate-500">© hh.kz clone</footer>
+      <footer className="border-t border-slate-200 py-6 text-center text-sm text-slate-500">© job.kz</footer>
     </div>
   );
 }

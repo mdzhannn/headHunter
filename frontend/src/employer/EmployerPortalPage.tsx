@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge, Btn, Card, Input, Toast } from '../components/ui';
-import { decodeJwtPayload, getStoredToken } from '../candidate/auth';
-import { employerApi, type EmployerCompanyDto, type EmployerVacancyDto } from './employerApi';
+import SentResumeDetails from '../components/SentResumeDetails';
+import { decodeJwtPayload } from '../candidate/auth';
+import { useAuth } from '../candidate/AuthContext';
+import type { CandidateResumeDto } from '../candidate/candidateApi';
+import { employerApi, type EmployerApplicationItemDto, type EmployerCompanyDto, type EmployerVacancyDto } from './employerApi';
 
 type VacancyForm = {
   jobTitle: string;
@@ -30,8 +33,22 @@ function moderationBadge(status?: 'PENDING' | 'APPROVED' | 'REJECTED') {
   return { text: 'На проверке', color: 'amber' as const };
 }
 
+function applicationStatusLabel(status: string | null | undefined): string {
+  if (status === 'VIEWED') return 'Просмотрен';
+  if (status === 'INVITED') return 'Приглашение';
+  if (status === 'REJECTED') return 'Отказ';
+  return 'Отправлен';
+}
+
+function formatDateTime(raw: string | null | undefined): string {
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 export default function EmployerPortalPage() {
-  const token = getStoredToken();
+  const { token, logout } = useAuth();
   const role = token ? String((decodeJwtPayload(token)?.role as string | undefined) ?? '') : '';
   const canEmployer = role === 'EMPLOYER' || role === 'BOTH';
   const [loading, setLoading] = useState(true);
@@ -43,6 +60,9 @@ export default function EmployerPortalPage() {
   });
   const [vacancyForm, setVacancyForm] = useState<VacancyForm>(emptyVacancy);
   const [vacancies, setVacancies] = useState<EmployerVacancyDto[]>([]);
+  const [resumes, setResumes] = useState<CandidateResumeDto[]>([]);
+  const [applications, setApplications] = useState<EmployerApplicationItemDto[]>([]);
+  const [expandedApplicationId, setExpandedApplicationId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [savingCompany, setSavingCompany] = useState(false);
   const [savingVacancy, setSavingVacancy] = useState(false);
@@ -51,9 +71,11 @@ export default function EmployerPortalPage() {
     if (!token || !canEmployer) return;
     setLoading(true);
     try {
-      const [myCompany, myVacancies] = await Promise.all([
+      const [myCompany, myVacancies, resumeList, appList] = await Promise.all([
         employerApi.getMyCompany(),
         employerApi.getMyVacancies().catch(() => []),
+        employerApi.listResumes().catch(() => []),
+        employerApi.listApplications().catch(() => []),
       ]);
       if (myCompany) {
         setCompany({
@@ -67,6 +89,8 @@ export default function EmployerPortalPage() {
         });
       }
       setVacancies(myVacancies);
+      setResumes(resumeList);
+      setApplications(appList);
     } catch {
       setToast({ msg: 'Не удалось загрузить данные работодателя', type: 'error' });
     } finally {
@@ -166,9 +190,16 @@ export default function EmployerPortalPage() {
           <p className="text-sm text-slate-600 mt-2">
             У вас нет роли работодателя. Попросите администратора назначить роль <b>EMPLOYER</b> или <b>BOTH</b> в админке пользователей.
           </p>
-          <Link to="/app/vacancies" className="inline-block mt-4">
-            <Btn variant="ghost">Вернуться к поиску работы</Btn>
-          </Link>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link to="/app/vacancies">
+              <Btn variant="ghost">Вернуться к поиску работы</Btn>
+            </Link>
+            {token ? (
+              <Btn variant="primary" onClick={() => logout()}>
+                Выйти
+              </Btn>
+            ) : null}
+          </div>
         </Card>
       </div>
     );
@@ -177,11 +208,25 @@ export default function EmployerPortalPage() {
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-6">
       <div className="max-w-5xl mx-auto space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Ищу сотрудника</h1>
-          <Link to="/app/vacancies">
-            <Btn variant="ghost">Перейти в режим соискателя</Btn>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link to="/app/messages">
+              <Btn variant="ghost">Сообщения с кандидатами</Btn>
+            </Link>
+            {role === 'BOTH' ? (
+              <Link to="/app/vacancies">
+                <Btn variant="ghost">Поиск работы</Btn>
+              </Link>
+            ) : null}
+            <Btn
+              variant="ghost"
+              onClick={() => logout()}
+              className="text-red-700 border-red-200 hover:bg-red-50"
+            >
+              Выйти
+            </Btn>
+          </div>
         </div>
 
         <Card className="p-4 md:p-5">
@@ -207,6 +252,114 @@ export default function EmployerPortalPage() {
               {savingCompany ? 'Сохранение...' : 'Сохранить компанию'}
             </Btn>
           </div>
+        </Card>
+
+        <Card className="p-4 md:p-5">
+          <h2 className="font-semibold text-slate-900 mb-1">Резюме кандидатов</h2>
+          <p className="text-sm text-slate-500 mb-3">
+            Список всех резюме в системе (кроме отклонённых модерацией). Статус модерации указан в карточке, если применимо.
+          </p>
+          {resumes.length === 0 ? (
+            <p className="text-sm text-slate-500">Пока нет резюме.</p>
+          ) : (
+            <div className="space-y-3 max-h-[min(70vh,520px)] overflow-y-auto pr-1">
+              {resumes.map((r, idx) => {
+                const fullName = [r.surname, r.name, r.patronymic].filter(Boolean).join(' ').trim() || 'Кандидат';
+                const skillsShort =
+                  r.skills && r.skills.length > 160 ? `${r.skills.slice(0, 160)}…` : (r.skills ?? '');
+                return (
+                  <div key={r.id ?? `resume-${idx}`} className="border border-slate-200 rounded-lg p-3 bg-white">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-900">{fullName}</p>
+                        <p className="text-sm text-slate-700 mt-1">{r.position || 'Должность не указана'}</p>
+                      </div>
+                      {r.moderationStatus && (
+                        <Badge color={moderationBadge(r.moderationStatus as 'PENDING' | 'APPROVED' | 'REJECTED').color}>
+                          {moderationBadge(r.moderationStatus as 'PENDING' | 'APPROVED' | 'REJECTED').text}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">{[r.location, r.education].filter(Boolean).join(' · ') || '—'}</p>
+                    {r.salary != null && r.salary > 0 && (
+                      <p className="text-xs text-slate-600 mt-1">Ожидания: {r.salary.toLocaleString('ru-RU')} ₸</p>
+                    )}
+                    {(r.email || r.phone) && (
+                      <p className="text-xs text-slate-600 mt-2">
+                        {r.email && <span>{r.email}</span>}
+                        {r.email && r.phone && <span> · </span>}
+                        {r.phone && <span>{r.phone}</span>}
+                      </p>
+                    )}
+                    {skillsShort ? <p className="text-xs text-slate-600 mt-2 leading-relaxed">{skillsShort}</p> : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-4 md:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+            <h2 className="font-semibold text-slate-900">Отклики на ваши вакансии</h2>
+            <Btn
+              size="sm"
+              variant="ghost"
+              onClick={async () => {
+                try {
+                  const res = await employerApi.repairConversations();
+                  setToast({ msg: res.message, type: 'success' });
+                  await load();
+                } catch {
+                  setToast({ msg: 'Ошибка при создании чатов', type: 'error' });
+                }
+              }}
+            >
+              Создать чаты для старых откликов
+            </Btn>
+          </div>
+          <p className="text-sm text-slate-500 mb-3">
+            Для каждого отклика показано резюме в том виде, в каком кандидат отправил его при отклике (для старых откликов без снимка — текущая версия из профиля).
+          </p>
+          {applications.length === 0 ? (
+            <p className="text-sm text-slate-500">Пока нет откликов на вакансии вашей компании.</p>
+          ) : (
+            <div className="space-y-2 max-h-[min(70vh,480px)] overflow-y-auto pr-1">
+              {applications.map((a) => {
+                const open = expandedApplicationId === a.id;
+                return (
+                  <div key={a.id} className="border border-slate-200 rounded-lg p-3 bg-white">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-900">{a.vacancyTitle ?? 'Вакансия'}</p>
+                        <p className="text-xs text-slate-500 mt-1">{formatDateTime(a.createdAt)}</p>
+                      </div>
+                      <Badge color="amber">{applicationStatusLabel(a.status)}</Badge>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <Btn size="sm" variant="ghost" onClick={() => setExpandedApplicationId(open ? null : a.id)}>
+                        {open ? 'Скрыть резюме' : 'Резюме на момент отклика'}
+                      </Btn>
+                      {a.conversationId ? (
+                        <Link to={`/app/messages/${a.conversationId}`}>
+                          <Btn size="sm" variant="primary">
+                            Написать в чат
+                          </Btn>
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-amber-600">Чат ещё не создан — нажмите «Создать чаты для старых откликов»</span>
+                      )}
+                    </div>
+                    {open ? (
+                      <div className="mt-3 pt-3 border-t border-slate-100">
+                        <SentResumeDetails r={a.resumeAtApply} />
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </Card>
 
         <Card className="p-4 md:p-5">

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import resume.vakansya.candidate.CandidateSecurity;
 import resume.vakansya.entities.CompanyDto;
+import resume.vakansya.entities.ResumeDto;
 import resume.vakansya.entities.VacancyDto;
 
 import java.util.List;
@@ -35,6 +36,23 @@ public class EmployerPortalController {
     @GetMapping("/vacancies")
     public List<VacancyDto> myVacancies() {
         return employerPortalService.listMyVacancies(CandidateSecurity.requireUserId());
+    }
+
+    @GetMapping("/resumes")
+    public List<ResumeDto> employerResumes() {
+        return employerPortalService.listResumesForEmployer(CandidateSecurity.requireUserId());
+    }
+
+    @GetMapping("/applications")
+    public List<EmployerApplicationItemDto> employerApplications() {
+        return employerPortalService.listApplicationsForEmployer(CandidateSecurity.requireUserId());
+    }
+
+    @PostMapping("/applications/repair-conversations")
+    public java.util.Map<String, Object> repairConversations() {
+        int created = employerPortalService.repairConversations(CandidateSecurity.requireUserId());
+        return java.util.Map.of("created", created, "message",
+                created > 0 ? "Создано бесед: " + created : "Все беседы уже существуют");
     }
 
     @PostMapping("/vacancies")

@@ -90,6 +90,15 @@ export interface ConversationListItemDto {
   unreadCount: number;
 }
 
+export interface ConversationDetailDto {
+  id: number;
+  employerUserId: number;
+  candidateUserId: number;
+  vacancyTitle: string;
+  counterpartyLabel: string;
+  messages: ChatMessageDto[];
+}
+
 export interface CandidateApplicationItemDto {
   id: number;
   vacancyId: number | null;
@@ -97,6 +106,8 @@ export interface CandidateApplicationItemDto {
   companyName: string | null;
   createdAt: string | null;
   status: string | null;
+  /** Резюме таким, каким оно было отправлено при отклике. */
+  resumeAtApply?: CandidateResumeDto | null;
 }
 
 type PublicVacanciesResponse =
@@ -177,6 +188,9 @@ export const candidateApi = {
   getConversations: () => fetchWithAuth<ConversationListItemDto[]>('/conversations/my'),
 
   getUnreadTotal: () => fetchWithAuth<{ total: number }>('/conversations/unread-total'),
+
+  getConversationDetail: (conversationId: number) =>
+    fetchWithAuth<ConversationDetailDto>(`/conversations/${conversationId}`),
 
   getMessages: (conversationId: number) =>
     fetchWithAuth<ChatMessageDto[]>(`/conversations/${conversationId}/messages`),

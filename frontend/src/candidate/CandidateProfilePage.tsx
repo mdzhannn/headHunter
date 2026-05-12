@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModerationStatus } from '../types';
-import { Badge, Btn, Card, Input, Spinner, Toast } from '../components/ui';
+import { Badge, Btn, Card, Input, PhoneInput, Spinner, Toast } from '../components/ui';
+import SentResumeDetails from '../components/SentResumeDetails';
 import { candidateApi, type CandidateApplicationItemDto, type CandidateResumeDto, type ConversationListItemDto } from './candidateApi';
 
 function PhotoUpload({ value, onChange }: { value?: string | null; onChange: (url: string) => void }) {
@@ -17,7 +18,7 @@ function PhotoUpload({ value, onChange }: { value?: string | null; onChange: (ur
   return (
     <div className="flex items-center gap-4">
       <div
-        className="w-20 h-20 rounded-full border-2 border-dashed border-slate-300 overflow-hidden cursor-pointer hover:border-[#2557a7] transition-colors flex items-center justify-center bg-slate-50 shrink-0"
+        className="w-20 h-20 rounded-full border-2 border-dashed border-slate-300 overflow-hidden cursor-pointer hover:border-[#0f2557] transition-colors flex items-center justify-center bg-slate-50 shrink-0"
         onClick={() => inputRef.current?.click()}
       >
         {value
@@ -25,7 +26,7 @@ function PhotoUpload({ value, onChange }: { value?: string | null; onChange: (ur
           : <span className="text-2xl">👤</span>}
       </div>
       <div>
-        <button type="button" className="text-sm text-[#2557a7] hover:underline" onClick={() => inputRef.current?.click()}>
+        <button type="button" className="text-sm text-[#0f2557] hover:underline font-medium" onClick={() => inputRef.current?.click()}>
           {value ? 'Изменить фото' : 'Добавить фото'}
         </button>
         <p className="text-xs text-slate-400 mt-0.5">JPG, PNG или WebP · до 5 МБ</p>
@@ -67,6 +68,7 @@ const empty: CandidateResumeDto = {};
 
 export default function CandidateProfilePage() {
   const [tab, setTab] = useState<TabId>('resume');
+  const [expandedAppId, setExpandedAppId] = useState<number | null>(null);
   const [resume, setResume] = useState<CandidateResumeDto>(empty);
   const [apps, setApps] = useState<CandidateApplicationItemDto[]>([]);
   const [conversations, setConversations] = useState<ConversationListItemDto[]>([]);
@@ -125,22 +127,35 @@ export default function CandidateProfilePage() {
 
   return (
     <div className="max-w-6xl mx-auto w-full p-4 md:p-6">
-      <h1 className="text-xl font-semibold text-slate-900">Личный кабинет</h1>
-      <div className="mt-4 border-b border-slate-200 flex gap-2">
-        <button
-          className={`px-4 py-2 text-sm border-b-2 ${tab === 'resume' ? 'border-[#2557a7] text-[#2557a7] font-medium' : 'border-transparent text-slate-500'}`}
-          onClick={() => setTab('resume')}
-          type="button"
-        >
-          Моё резюме
-        </button>
-        <button
-          className={`px-4 py-2 text-sm border-b-2 ${tab === 'applications' ? 'border-[#2557a7] text-[#2557a7] font-medium' : 'border-transparent text-slate-500'}`}
-          onClick={() => setTab('applications')}
-          type="button"
-        >
-          Мои отклики
-        </button>
+      <div className="rounded-xl overflow-hidden border border-slate-200/90 shadow-sm">
+        <div className="bg-[#0f2557] px-5 py-4">
+          <h1 className="text-xl font-semibold text-white">Личный кабинет</h1>
+          <p className="text-xs text-white/70 mt-0.5">Управляйте резюме и откликами</p>
+        </div>
+        <div className="bg-white border-b border-slate-200 flex gap-1 px-3">
+          <button
+            className={`px-4 py-3 text-sm border-b-2 transition-colors ${
+              tab === 'resume'
+                ? 'border-[#0f2557] text-[#0f2557] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+            onClick={() => setTab('resume')}
+            type="button"
+          >
+            Моё резюме
+          </button>
+          <button
+            className={`px-4 py-3 text-sm border-b-2 transition-colors ${
+              tab === 'applications'
+                ? 'border-[#0f2557] text-[#0f2557] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+            onClick={() => setTab('applications')}
+            type="button"
+          >
+            Мои отклики
+          </button>
+        </div>
       </div>
 
       {tab === 'resume' ? (
@@ -169,7 +184,7 @@ export default function CandidateProfilePage() {
               <Input label="Отчество" value={resume.patronymic ?? ''} onChange={e => setField('patronymic', e.target.value)} />
               <Input label="Возраст" type="number" value={resume.age ?? ''} onChange={e => setField('age', e.target.value ? +e.target.value : undefined)} />
               <Input label="Email" value={resume.email ?? ''} onChange={e => setField('email', e.target.value)} />
-              <Input label="Телефон" value={resume.phone ?? ''} onChange={e => setField('phone', e.target.value)} />
+              <PhoneInput label="Телефон" value={resume.phone ?? '+7'} onChange={val => setField('phone', val)} />
               <Input label="Специальность" value={resume.position ?? ''} onChange={e => setField('position', e.target.value)} />
               <Input label="Желаемая зарплата" type="number" value={resume.salary ?? ''} onChange={e => setField('salary', e.target.value ? +e.target.value : undefined)} />
             </div>
@@ -203,7 +218,7 @@ export default function CandidateProfilePage() {
               </div>
             </div>
             <div className="flex justify-end">
-              <Btn variant="primary" className="!bg-[#2557a7] !border-[#2557a7]" onClick={saveResume} disabled={saving}>
+              <Btn variant="primary" className="!bg-[#0f2557] !border-[#0f2557]" onClick={saveResume} disabled={saving}>
                 {saving ? 'Сохранение…' : 'Сохранить'}
               </Btn>
             </div>
@@ -222,28 +237,50 @@ export default function CandidateProfilePage() {
                     <th className="px-4 py-3 text-left font-medium">Компания</th>
                     <th className="px-4 py-3 text-left font-medium">Дата</th>
                     <th className="px-4 py-3 text-left font-medium">Статус</th>
+                    <th className="px-4 py-3 text-left font-medium">Резюме при отклике</th>
                     <th className="px-4 py-3 text-left font-medium">Чат</th>
                   </tr>
                 </thead>
                 <tbody>
                   {apps.map((app) => {
                     const convId = conversationByApplication.get(app.id);
+                    const showSnap = expandedAppId === app.id;
                     return (
-                      <tr key={app.id} className="border-t border-slate-100">
-                        <td className="px-4 py-3 text-slate-800">{app.vacancyTitle ?? '—'}</td>
-                        <td className="px-4 py-3 text-slate-600">{app.companyName ?? '—'}</td>
-                        <td className="px-4 py-3 text-slate-600">{formatDate(app.createdAt)}</td>
-                        <td className="px-4 py-3 text-slate-700">{applicationStatusLabel(app.status)}</td>
-                        <td className="px-4 py-3">
-                          {convId ? (
-                            <Link className="text-[#2557a7] hover:underline" to={`/app/messages/${convId}`}>
-                              Открыть чат
-                            </Link>
-                          ) : (
-                            <span className="text-slate-400">—</span>
-                          )}
-                        </td>
-                      </tr>
+                      <Fragment key={app.id}>
+                        <tr className="border-t border-slate-100">
+                          <td className="px-4 py-3 text-slate-800">{app.vacancyTitle ?? '—'}</td>
+                          <td className="px-4 py-3 text-slate-600">{app.companyName ?? '—'}</td>
+                          <td className="px-4 py-3 text-slate-600">{formatDate(app.createdAt)}</td>
+                          <td className="px-4 py-3 text-slate-700">{applicationStatusLabel(app.status)}</td>
+                          <td className="px-4 py-3">
+                            <Btn
+                              size="sm"
+                              variant="ghost"
+                              className="!px-2 !py-1 text-xs"
+                              onClick={() => setExpandedAppId(showSnap ? null : app.id)}
+                            >
+                              {showSnap ? 'Скрыть' : 'Показать'}
+                            </Btn>
+                          </td>
+                          <td className="px-4 py-3">
+                            {convId ? (
+                              <Link className="text-[#0f2557] hover:underline font-medium" to={`/app/messages/${convId}`}>
+                                Открыть чат
+                              </Link>
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
+                          </td>
+                        </tr>
+                        {showSnap ? (
+                          <tr key={`${app.id}-snap`} className="border-t border-slate-100 bg-slate-50/80">
+                            <td colSpan={6} className="px-4 py-3">
+                              <p className="text-xs font-medium text-slate-600 mb-2">Резюме на момент отклика</p>
+                              <SentResumeDetails r={app.resumeAtApply} />
+                            </td>
+                          </tr>
+                        ) : null}
+                      </Fragment>
                     );
                   })}
                 </tbody>

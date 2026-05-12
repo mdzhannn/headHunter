@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ModerationStatus } from '../types';
-import { Btn, Input, Card, Badge, Spinner, Toast, SectionHeader } from '../components/ui';
+import { Btn, Input, PhoneInput, Card, Badge, Spinner, Toast, SectionHeader } from '../components/ui';
 import { candidateApi, type CandidateResumeDto } from './candidateApi';
 
 function modLabel(s: ModerationStatus | undefined): string {
@@ -83,7 +83,7 @@ export default function CandidateResumePage() {
           <Input label="Отчество" value={v.patronymic ?? ''} onChange={e => setField('patronymic', e.target.value)} />
           <Input label="Возраст" type="number" value={v.age ?? ''} onChange={e => setField('age', e.target.value ? +e.target.value : undefined)} />
           <Input label="Email" value={v.email ?? ''} onChange={e => setField('email', e.target.value)} />
-          <Input label="Телефон" value={v.phone ?? ''} onChange={e => setField('phone', e.target.value)} />
+          <PhoneInput label="Телефон" value={v.phone ?? '+7'} onChange={val => setField('phone', val)} />
           <Input label="Пол" value={v.gender ?? ''} onChange={e => setField('gender', e.target.value)} />
           <Input
             label="Семейное положение (да/нет)"

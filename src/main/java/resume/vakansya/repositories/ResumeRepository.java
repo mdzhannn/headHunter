@@ -18,6 +18,9 @@ public interface ResumeRepository extends JpaRepository<Resume, Long> {
 
     List<Resume> findByModerationStatus(ModerationStatus moderationStatus);
 
+    @Query("SELECT r FROM Resume r WHERE r.moderationStatus IS NULL OR r.moderationStatus <> resume.vakansya.entities.ModerationStatus.REJECTED ORDER BY r.createDate DESC")
+    List<Resume> findAllForEmployerCatalog();
+
     @Query("SELECT r FROM Resume r WHERE r.moderationStatus IS NULL OR r.moderationStatus = resume.vakansya.entities.ModerationStatus.PENDING")
     List<Resume> findPendingOrLegacy();
 

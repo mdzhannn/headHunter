@@ -26,6 +26,18 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_OPEN_IN_VIEW: "false"
+      SPRING_JACKSON_SERIALIZATION_WRITE_DATES_AS_TIMESTAMPS: "false"
+      SERVER_ERROR_INCLUDE_MESSAGE: always
+      # JWT — override in production with a strong secret
+      APP_AUTH_JWT_SECRET: ${APP_AUTH_JWT_SECRET:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+      APP_AUTH_JWT_EXPIRATION_MS: ${APP_AUTH_JWT_EXPIRATION_MS:-86400000}
+      # Mail — required for OTP emails; set these in .env or environment
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      APP_MAIL_FROM: ${APP_MAIL_FROM:-}
     depends_on:
       db:
         condition: service_healthy

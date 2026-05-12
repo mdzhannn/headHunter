@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api';
 import type { User } from '../types';
-import { Btn, Input, Badge, Card, SectionHeader, Empty, Spinner, Modal, Toast } from '../components/ui';
+import { Btn, Input, PhoneInput, Badge, Card, SectionHeader, Empty, Spinner, Modal, Toast } from '../components/ui';
 import { getAdminSubRoleFromToken, getStoredToken } from '../candidate/auth';
 
 export default function UsersPage() {
@@ -16,7 +16,7 @@ export default function UsersPage() {
     name: '',
     surname: '',
     email: '',
-    phone: '',
+    phone: '+7',
     roleName: 'CANDIDATE' as 'CANDIDATE' | 'EMPLOYER' | 'BOTH' | 'ADMIN',
   });
   const [roleDrafts, setRoleDrafts] = useState<Record<number, 'CANDIDATE' | 'EMPLOYER' | 'BOTH' | 'ADMIN'>>({});
@@ -45,7 +45,7 @@ export default function UsersPage() {
       await api.users.create(form);
       notify('Пользователь создан');
       setShowCreate(false);
-      setForm({ name: '', surname: '', email: '', phone: '', roleName: 'CANDIDATE' });
+      setForm({ name: '', surname: '', email: '', phone: '+7', roleName: 'CANDIDATE' });
       load();
     } catch { notify('Ошибка создания', 'error'); }
   };
@@ -150,7 +150,7 @@ export default function UsersPage() {
             <Input label="Имя" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Иван" />
             <Input label="Фамилия" value={form.surname} onChange={e => setForm(f => ({ ...f, surname: e.target.value }))} placeholder="Иванов" />
             <Input label="Email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="ivan@mail.com" />
-            <Input label="Телефон" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+7..." />
+            <PhoneInput label="Телефон" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} />
             <div className="flex flex-col gap-1 col-span-2">
               <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Роль</label>
               <select
@@ -178,7 +178,7 @@ export default function UsersPage() {
             <Input label="Имя" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             <Input label="Фамилия" value={form.surname} onChange={e => setForm(f => ({ ...f, surname: e.target.value }))} />
             <Input label="Email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-            <Input label="Телефон" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+            <PhoneInput label="Телефон" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} />
             <div className="flex flex-col gap-1 col-span-2">
               <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Роль</label>
               <select

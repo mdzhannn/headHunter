@@ -2,11 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { NavLink, Outlet, Route, Routes, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { api } from './api';
 import type { AdminDashboard, AdminNotification } from './types';
-import { getStoredToken, decodeJwtPayload } from './candidate/auth';
+import { getStoredToken, decodeJwtPayload, clearStoredToken } from './candidate/auth';
 import UsersPage from './pages/UsersPage';
 import ResumesPage from './pages/ResumesPage';
 import VacanciesPage from './pages/VacanciesPage';
-import EmailPage from './pages/EmailPage';
 import CompaniesPage from './pages/CompaniesPage';
 import DashboardPage from './pages/DashboardPage';
 import AuditPage from './pages/AuditPage';
@@ -23,7 +22,6 @@ const ROUTE_LABELS: Record<string, string> = {
   '/admin/companies': 'Компании',
   '/admin/resumes': 'Резюме',
   '/admin/vacancies': 'Вакансии',
-  '/admin/email': 'Email',
   '/admin/audit': 'Audit Log',
 };
 
@@ -40,7 +38,6 @@ const NAV: NavDef[] = [
   { to: '/admin/companies', label: 'Компании', icon: '🏢', pendingField: 'pendingCompanies' },
   { to: '/admin/resumes', label: 'Резюме', icon: '📄', pendingField: 'pendingResumes' },
   { to: '/admin/vacancies', label: 'Вакансии', icon: '💼', pendingField: 'pendingVacancies' },
-  { to: '/admin/email', label: 'Email', icon: '✉️' },
   { to: '/admin/audit', label: 'Audit Log', icon: '🧾' },
 ];
 
@@ -105,21 +102,18 @@ function AdminShell() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
-      <aside className="w-60 bg-white border-r border-slate-200 flex flex-col fixed h-full">
-        <div className="px-5 py-5 border-b border-slate-100">
+      <aside className="w-60 bg-[#0f2557] flex flex-col fixed h-full">
+        <div className="px-5 py-5 border-b border-[#1a3570]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">HH</span>
-            </div>
             <div>
-              <div className="font-semibold text-slate-900 text-sm leading-tight">HeadHunter</div>
-              <div className="text-xs text-slate-400">Admin Panel</div>
+              <div className="font-bold text-xl tracking-tight text-white leading-tight">job.kz</div>
+              <div className="text-xs text-blue-300 mt-0.5">Admin Panel</div>
             </div>
           </div>
         </div>
 
         <nav className="flex-1 p-3">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Разделы</div>
+          <div className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider px-3 mb-2">Разделы</div>
           {NAV.map(n => {
             const pending =
               n.pendingField && stats ? stats[n.pendingField] : 0;
@@ -128,17 +122,17 @@ function AdminShell() {
                 key={n.to}
                 to={n.to}
                 className={({ isActive }) =>
-                  `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all mb-0.5 border
+                  `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all mb-0.5
                   ${isActive
-                    ? 'bg-indigo-50 text-indigo-700 border-indigo-100'
-                    : 'text-slate-600 hover:bg-slate-50 border-transparent'}`
+                    ? 'bg-white/15 text-white'
+                    : 'text-blue-100 hover:bg-white/10 hover:text-white'}`
                 }
               >
                 <span className="relative inline-flex text-base leading-none">
                   <span>{n.icon}</span>
                   {pending > 0 && (
                     <span
-                      className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center leading-none shadow-sm border border-white"
+                      className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-0.5 rounded-full bg-amber-400 text-slate-900 text-[10px] font-bold flex items-center justify-center leading-none shadow-sm"
                       title={`На проверке: ${pending}`}
                     >
                       {pending > 99 ? '99+' : pending}
@@ -151,24 +145,33 @@ function AdminShell() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <div className="text-xs text-slate-400">Spring Boot 3.3.1</div>
-          <div className="text-xs text-slate-400">localhost:8080</div>
+        <div className="p-4 border-t border-[#1a3570] space-y-2">
+          <button
+            type="button"
+            onClick={() => { clearStoredToken(); nav('/app/login', { replace: true }); }}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-colors"
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+            </svg>
+            Выйти
+          </button>
+          <div className="text-xs text-blue-300/50">Spring Boot 3.3.1 · localhost:8080</div>
         </div>
       </aside>
 
       <main className="flex-1 ml-60">
-        <header className="bg-white border-b border-slate-200 px-8 py-4 sticky top-0 z-10">
+        <header className="bg-[#0f2557] border-b border-[#1a3570] px-8 py-4 sticky top-0 z-10">
           <div className="flex items-center justify-between gap-2 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-slate-400">HeadHunter</span>
-              <span className="text-slate-300">/</span>
-              <span className="text-slate-700 font-medium">{crumb}</span>
+              <span className="text-blue-300">job.kz</span>
+              <span className="text-blue-400/60">/</span>
+              <span className="text-white font-medium">{crumb}</span>
             </div>
             <div className="relative">
               <button
                 type="button"
-                className="w-9 h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 relative"
+                className="w-9 h-9 rounded-lg border border-white/20 bg-white/10 hover:bg-white/20 text-white relative transition-colors"
                 onClick={() => {
                   setOpenNotifications((v) => !v);
                   setUnreadCount(0);
@@ -228,7 +231,6 @@ export default function AdminApp() {
         <Route path="admin/companies" element={<CompaniesPage />} />
         <Route path="admin/resumes" element={<ResumesPage />} />
         <Route path="admin/vacancies" element={<VacanciesPage />} />
-        <Route path="admin/email" element={<EmailPage />} />
         <Route path="admin/audit" element={<AuditPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

@@ -10,6 +10,7 @@ import resume.vakansya.entities.ModerationStatus;
 import resume.vakansya.entities.Resume;
 import resume.vakansya.entities.User;
 import resume.vakansya.entities.Vacancy;
+import resume.vakansya.job.JobApplicationResumeSnapshotService;
 import resume.vakansya.repositories.JobApplicationRepository;
 import resume.vakansya.repositories.ResumeRepository;
 import resume.vakansya.repositories.UserRepository;
@@ -26,6 +27,7 @@ public class CandidateApplyService {
     private final UserRepository userRepository;
     private final JobApplicationRepository jobApplicationRepository;
     private final ConversationService conversationService;
+    private final JobApplicationResumeSnapshotService resumeSnapshotService;
 
     @Transactional
     public void apply(long userId, long vacancyId) {
@@ -48,6 +50,7 @@ public class CandidateApplyService {
         app.setVacancy(vacancy);
         app.setResume(resume);
         app.setStatus("SENT");
+        resumeSnapshotService.attachSnapshot(app, resume);
         jobApplicationRepository.save(app);
         conversationService.ensureForApplication(app);
     }
@@ -60,10 +63,22 @@ public class CandidateApplyService {
                         app.getId(),
                         app.getVacancy() != null ? app.getVacancy().getId() : null,
                         app.getVacancy() != null ? app.getVacancy().getJobTitle() : null,
-                        app.getVacancy() != null ? app.getVacancy().getAboutCompany() : null,
+                        resolveCompanyDisplayName(app),
                         app.getCreatedAt(),
-                        app.getStatus()))
+                        app.getStatus(),
+                        resumeSnapshotService.resumeAtApply(app)))
                 .toList();
+    }
+
+    private static String resolveCompanyDisplayName(JobApplication app) {
+        Vacancy v = app.getVacancy();
+        if (v == null) {
+            return null;
+        }
+        if (v.getCompany() != null && v.getCompany().getName() != null && !v.getCompany().getName().isBlank()) {
+            return v.getCompany().getName();
+        }
+        return v.getAboutCompany();
     }
 
     private void requireCandidateAccess(long userId) {

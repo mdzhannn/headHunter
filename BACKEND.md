@@ -221,9 +221,31 @@ STOMP:
 
 JWT также проверяется при STOMP-подключении.
 
+**Правило первого сообщения:** первое сообщение в диалоге может отправить только работодатель (`ConversationService.sendMessage`).
+
 ---
 
-## 9) Сущности, важные для auth
+## 9) Новые эндпоинты (актуально)
+
+### Детали диалога
+
+- `GET /conversations/{id}` — возвращает `ConversationDetailDto`: `employerUserId`, `candidateUserId`, `vacancyTitle`, `counterpartyLabel`, список `messages`.
+
+### Audit Log
+
+- `GET /admin/audit?entityType=&adminEmail=&from=&to=&page=&size=` — страница `AuditLogDto`.
+
+Реализован через `AdminAuditAspect` (AOP `@Around`) — фиксирует все POST/PUT/DELETE в Admin/Company/User контроллерах.
+
+### Работодатель
+
+- `GET /employer/resumes` — каталог резюме для работодателя
+- `GET /employer/applications` — отклики на вакансии компании
+- `POST /employer/applications/repair-conversations` — создать чаты для старых откликов
+
+---
+
+## 10) Сущности, важные для auth
 
 - `User`
   - `phone` используется как логин-идентификатор (в текущем flow это email)

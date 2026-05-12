@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../api';
 import type { Resume, ModerationStatus } from '../types';
-import { Btn, Input, Badge, Card, SectionHeader, Empty, Spinner, Modal, Toast } from '../components/ui';
+import { Btn, Input, PhoneInput, Badge, Card, SectionHeader, Empty, Spinner, Modal, Toast } from '../components/ui';
 import { getAdminSubRoleFromToken, getStoredToken } from '../candidate/auth';
 
-const emptyForm = { name: '', surname: '', email: '', phone: '', position: '', userId: 0 };
+const emptyForm = { name: '', surname: '', email: '', phone: '+7', position: '', userId: 0 };
 
 const STATUS_OPTS: Array<'all' | ModerationStatus> = ['all', 'PENDING', 'APPROVED', 'REJECTED'];
 
@@ -288,7 +288,7 @@ export default function ResumesPage() {
             <Input label="Имя" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Иван" />
             <Input label="Фамилия" value={form.surname} onChange={e => setForm(f => ({ ...f, surname: e.target.value }))} placeholder="Иванов" />
             <Input label="Email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="ivan@mail.com" />
-            <Input label="Телефон" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+7..." />
+            <PhoneInput label="Телефон" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} />
             <Input
               label="Должность"
               value={form.position}
@@ -313,7 +313,7 @@ export default function ResumesPage() {
             <Input label="Имя" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             <Input label="Фамилия" value={form.surname} onChange={e => setForm(f => ({ ...f, surname: e.target.value }))} />
             <Input label="Email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-            <Input label="Телефон" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+            <PhoneInput label="Телефон" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} />
             <Input
               label="Должность"
               value={form.position}

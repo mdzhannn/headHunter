@@ -15,8 +15,15 @@ function toIsoFromDateEnd(value: string): string | undefined {
   return `${value}T23:59:59`;
 }
 
-function formatDate(value: string): string {
-  const d = new Date(value);
+function formatDate(value: string | number[]): string {
+  let d: Date;
+  if (Array.isArray(value)) {
+    // Hibernate may return [year, month, day, hour, min, sec, nano]
+    const [y, mo, day, h = 0, min = 0, sec = 0] = value as number[];
+    d = new Date(y, mo - 1, day, h, min, sec);
+  } else {
+    d = new Date(value as string);
+  }
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'medium' });
 }
 

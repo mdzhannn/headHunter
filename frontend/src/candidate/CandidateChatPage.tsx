@@ -4,7 +4,7 @@ import type { Client } from '@stomp/stompjs';
 import { Btn, Card } from '../components/ui';
 import { decodeJwtPayload } from './auth';
 import { useAuth } from './AuthContext';
-import { candidateApi, type ChatMessageDto } from './candidateApi';
+import { candidateApi, type ChatMessageDto, type ConversationDetailDto } from './candidateApi';
 import { connectChatStomp, publishChatMessage } from './chatStomp';
 
 function currentUserId(t: string | null): number | null {
@@ -32,6 +32,7 @@ export default function CandidateChatPage() {
   const { token } = useAuth();
   const me = currentUserId(token);
 
+  const [detail, setDetail] = useState<ConversationDetailDto | null>(null);
   const [messages, setMessages] = useState<ChatMessageDto[]>([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -56,9 +57,12 @@ export default function CandidateChatPage() {
     let cancelled = false;
     setLoading(true);
     candidateApi
-      .getMessages(convId)
-      .then((list) => {
-        if (!cancelled) setMessages(list);
+      .getConversationDetail(convId)
+      .then((d) => {
+        if (!cancelled) {
+          setDetail(d);
+          setMessages(d.messages);
+        }
       })
       .catch(() => {
         if (!cancelled) nav('/app/messages', { replace: true });
@@ -91,7 +95,7 @@ export default function CandidateChatPage() {
       void clientRef.current?.deactivate();
       clientRef.current = null;
     };
-  }, [convId, nav, appendMessage]);
+  }, [convId, nav, appendMessage, token]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -108,6 +112,12 @@ export default function CandidateChatPage() {
 
   if (!Number.isFinite(convId) || convId <= 0) return null;
 
+  // Текущий пользователь является работодателем в этом диалоге
+  const imEmployer = detail !== null && me !== null && me === detail.employerUserId;
+  // Кандидат может писать только если уже есть хотя бы одно сообщение от работодателя
+  const employerHasWritten = messages.some((m) => detail && m.senderId === detail.employerUserId);
+  const canSend = imEmployer || employerHasWritten;
+
   return (
     <div className="flex flex-col h-[min(78vh,calc(100vh-8rem))]">
       <div className="flex items-center gap-3 mb-3">
@@ -120,7 +130,15 @@ export default function CandidateChatPage() {
 
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-slate-200">
         <div className="px-4 py-3 border-b border-slate-100 bg-white text-sm text-slate-600">
-          Диалог #{convId}
+          {detail ? (
+            <span>
+              <span className="font-medium">{detail.vacancyTitle}</span>
+              {' · '}
+              <span className="text-slate-400">{detail.counterpartyLabel}</span>
+            </span>
+          ) : (
+            `Диалог #${convId}`
+          )}
         </div>
         <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50">
           {loading ? (
@@ -144,9 +162,7 @@ export default function CandidateChatPage() {
                     }`}
                   >
                     <p className="whitespace-pre-wrap break-words">{m.text}</p>
-                    <p
-                      className={`text-[10px] mt-1 ${mine ? 'text-blue-100' : 'text-slate-400'}`}
-                    >
+                    <p className={`text-[10px] mt-1 ${mine ? 'text-blue-100' : 'text-slate-400'}`}>
                       {fmtMsgTime(m.createdAt)}
                     </p>
                   </div>
@@ -156,23 +172,41 @@ export default function CandidateChatPage() {
           )}
           <div ref={bottomRef} />
         </div>
-        <div className="p-3 border-t border-slate-200 flex gap-2 items-end bg-white">
-          <textarea
-            className="flex-1 min-h-[44px] max-h-28 resize-none px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#2557a7] focus:ring-2 focus:ring-blue-100"
-            placeholder="Сообщение…"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
-          />
-          <Btn variant="primary" className="!bg-[#2557a7] !border-[#2557a7]" onClick={send} disabled={!text.trim() || sending}>
-            Отправить
-          </Btn>
-        </div>
+
+        {/* Поле ввода */}
+        {canSend ? (
+          <div className="p-3 border-t border-slate-200 flex gap-2 items-end bg-white">
+            <textarea
+              className="flex-1 min-h-[44px] max-h-28 resize-none px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#2557a7] focus:ring-2 focus:ring-blue-100"
+              placeholder="Сообщение…"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+            />
+            <Btn
+              variant="primary"
+              className="!bg-[#2557a7] !border-[#2557a7]"
+              onClick={send}
+              disabled={!text.trim() || sending}
+            >
+              Отправить
+            </Btn>
+          </div>
+        ) : (
+          !loading && (
+            <div className="p-4 border-t border-slate-200 bg-amber-50 text-center text-sm text-amber-700 flex items-center justify-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Работодатель ещё не написал. Ответить можно после первого сообщения от работодателя.
+            </div>
+          )
+        )}
       </Card>
     </div>
   );

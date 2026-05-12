@@ -14,6 +14,12 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     @Query("""
             select c from Conversation c
+            where c.application.id in :applicationIds
+            """)
+    List<Conversation> findAllByApplicationIds(@Param("applicationIds") List<Long> applicationIds);
+
+    @Query("""
+            select c from Conversation c
             where c.candidateUserId = :userId or c.employerUserId = :userId
             order by c.lastMessageAt desc nulls last, c.id desc
             """)

@@ -3,6 +3,7 @@ package resume.vakansya.chat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import resume.vakansya.candidate.CandidateSecurity;
+import resume.vakansya.chat.dto.ConversationDetailDto;
 import resume.vakansya.chat.dto.ConversationListItemDto;
 import resume.vakansya.chat.dto.MessageItemDto;
 import resume.vakansya.chat.dto.UnreadTotalDto;
@@ -25,6 +26,11 @@ public class ConversationController {
     @GetMapping("/unread-total")
     public UnreadTotalDto unreadTotal() {
         return conversationService.unreadTotal(CandidateSecurity.requireUserId());
+    }
+
+    @GetMapping("/{id}")
+    public ConversationDetailDto detail(@PathVariable long id) {
+        return conversationService.getDetail(id, CandidateSecurity.requireUserId());
     }
 
     @GetMapping("/{id}/messages")
