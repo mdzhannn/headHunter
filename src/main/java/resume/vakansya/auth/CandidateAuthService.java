@@ -48,17 +48,41 @@ public class CandidateAuthService {
     @Value("${app.mail.from:}")
     private String mailFrom;
 
+    @jakarta.annotation.PostConstruct
+    void logMailConfig() {
+        // No secrets in logs: only host/port/username presence and mailFrom domain
+        Object host = "?";
+        Object port = "?";
+        Object username = "?";
+        boolean hasPassword = false;
+        if (mailSender instanceof org.springframework.mail.javamail.JavaMailSenderImpl impl) {
+            host = impl.getHost();
+            port = impl.getPort();
+            username = impl.getUsername();
+            hasPassword = impl.getPassword() != null && !impl.getPassword().isBlank();
+        }
+        log.info("[MAIL CFG] host={} port={} username={} hasPassword={} app.mail.from={}",
+                host, port, username, hasPassword, mailFrom);
+    }
+
     @Transactional
     public void startRegistration(String rawFullName, String rawEmail) {
+        log.info("[OTP REGISTER] start raw email={} fullName={}", rawEmail, rawFullName);
         String fullName = normalizeFullName(rawFullName);
         String email = EmailNormalizer.normalize(rawEmail);
+        log.info("[OTP REGISTER] normalized email={}", email);
+
         User existing = userRepository.findByPhone(email).orElse(null);
         if (existing != null && existing.getPassword() != null && !existing.getPassword().isBlank()) {
+            log.warn("[OTP REGISTER] email already registered: {}", email);
             throw new ResponseStatusException(HttpStatus.CONFLICT, "email already registered");
         }
         LocalDateTime since = LocalDateTime.now().minusMinutes(authProperties.getOtpRateWindowMinutes());
         long sent = otpChallengeRepository.countByPhoneAndCreatedAtAfter(email, since);
+        log.info("[OTP REGISTER] recent OTP requests for {}: {} (limit {})",
+                email, sent, authProperties.getOtpMaxSendsPerWindow());
         if (sent >= authProperties.getOtpMaxSendsPerWindow()) {
+            log.warn("[OTP REGISTER] rate limited: {}", email);
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Too many OTP requests");
         }
         int code = 100000 + RANDOM.nextInt(900000);
@@ -72,11 +96,13 @@ public class CandidateAuthService {
         ch.setFullName(fullName);
         ch.setVerifiedAt(null);
         otpChallengeRepository.save(ch);
+        log.info("[OTP REGISTER] challenge saved, sending email to {}", email);
         sendHtmlEmail(
                 email,
                 emailOtpTemplateService.otpSubject(),
                 emailOtpTemplateService.otpBody(plain, authProperties.getOtpTtlMinutes())
         );
+        log.info("[OTP REGISTER] email sent successfully to {}", email);
     }
 
     @Transactional
@@ -346,6 +372,8 @@ public class CandidateAuthService {
     }
 
     private void sendHtmlEmail(String email, String subject, String htmlBody) {
+        long t0 = System.currentTimeMillis();
+        log.info("[SMTP SEND] -> to={} from={} subject={}", email, mailFrom, subject);
         try {
             MimeMessagePreparator preparator = mimeMessage -> {
                 if (mailFrom != null && !mailFrom.isBlank()) {
@@ -358,9 +386,23 @@ public class CandidateAuthService {
                 mimeMessage.setHeader("Content-Type", "text/html; charset=UTF-8");
             };
             mailSender.send(preparator);
+            log.info("[SMTP SEND] OK to={} elapsedMs={}", email, System.currentTimeMillis() - t0);
         } catch (Exception e) {
-            log.error("SMTP send failed to={} cause={} msg={}", email, e.getClass().getSimpleName(), e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "email send failed: " + e.getMessage());
+            // Unwrap to show the root SMTP cause (AuthenticationFailedException, MessagingException, etc.)
+            Throwable root = e;
+            while (root.getCause() != null && root.getCause() != root) {
+                root = root.getCause();
+            }
+            log.error("[SMTP SEND] FAILED to={} elapsedMs={} type={} msg={} rootType={} rootMsg={}",
+                    email,
+                    System.currentTimeMillis() - t0,
+                    e.getClass().getName(),
+                    e.getMessage(),
+                    root.getClass().getName(),
+                    root.getMessage(),
+                    e);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "email send failed: " + root.getClass().getSimpleName() + ": " + root.getMessage());
         }
     }
 }

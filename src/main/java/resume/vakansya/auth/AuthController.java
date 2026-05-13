@@ -1,12 +1,13 @@
 package resume.vakansya.auth;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+@Slf4j
 @RestController
-@CrossOrigin(originPatterns = {"http://localhost:*", "http://127.0.0.1:*"})
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
@@ -15,6 +16,9 @@ public class AuthController {
 
     @PostMapping("/register/send-email-otp")
     public ResponseEntity<Void> startRegistration(@RequestBody StartRegistrationRequest body) {
+        log.info("[AUTH] POST /auth/register/send-email-otp body.email={} body.fullName={}",
+                body == null ? null : body.getEmail(),
+                body == null ? null : body.getFullName());
         if (body == null || body.getEmail() == null || body.getEmail().isBlank()) {
             throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "email required");
         }
@@ -22,6 +26,7 @@ public class AuthController {
             throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "fullName required");
         }
         candidateAuthService.startRegistration(body.getFullName(), body.getEmail());
+        log.info("[AUTH] /auth/register/send-email-otp completed for {}", body.getEmail());
         return ResponseEntity.ok().build();
     }
 
