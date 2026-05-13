@@ -1,7 +1,8 @@
 import type { AdminDashboard, AuditLog, Company, ModerationStatus, PagedResult } from '../types';
 import { CANDIDATE_TOKEN_KEY } from '../candidate/auth';
+import { getApiBase } from '../apiBase';
 
-const BASE = import.meta.env.VITE_API_BASE ?? '';
+const BASE = getApiBase();
 
 async function req<T>(url: string, opts?: RequestInit): Promise<T> {
   const token = localStorage.getItem(CANDIDATE_TOKEN_KEY);

@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_BASE ?? '';
+import { getApiBase } from '../apiBase';
+
+const BASE = getApiBase();
 
 export const CANDIDATE_TOKEN_KEY = 'hh_candidate_token';
 export const CANDIDATE_REFRESH_TOKEN_KEY = 'hh_candidate_refresh_token';

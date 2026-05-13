@@ -1,5 +1,8 @@
 import type { ModerationStatus } from '../types';
 import { fetchWithAuth } from './auth';
+import { getApiBase } from '../apiBase';
+
+const PUBLIC_BASE = getApiBase();
 
 export interface CandidateResumeDto {
   id?: number;
@@ -120,8 +123,7 @@ type PublicVacanciesResponse =
     };
 
 function reqPublic<T>(path: string): Promise<T> {
-  const BASE = import.meta.env.VITE_API_BASE ?? '';
-  return fetch(BASE + path, { headers: { 'Content-Type': 'application/json' } }).then(async (res) => {
+  return fetch(PUBLIC_BASE + path, { headers: { 'Content-Type': 'application/json' } }).then(async (res) => {
     const text = await res.text();
     if (!res.ok) {
       const err = new Error(text || `${res.status} ${res.statusText}`) as Error & { status: number };

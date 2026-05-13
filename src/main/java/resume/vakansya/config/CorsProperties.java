@@ -19,7 +19,7 @@ public class CorsProperties {
     /**
      * Comma-separated patterns, same semantics as {@link org.springframework.web.cors.CorsConfiguration#setAllowedOriginPatterns}.
      */
-    private String allowedOriginPatterns = "http://localhost:*,http://127.0.0.1:*";
+    private String allowedOriginPatterns = "http://localhost:*,http://127.0.0.1:*,https://*.vercel.app";
 
     public List<String> patternsList() {
         return Arrays.stream(allowedOriginPatterns.split(","))
