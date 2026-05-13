@@ -5,11 +5,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import resume.vakansya.config.AuthProperties;
 import resume.vakansya.config.CorsProperties;
+import resume.vakansya.mail.MailProperties;
 
 @SpringBootApplication
 @EnableConfigurationProperties({
         AuthProperties.class,
-        CorsProperties.class
+        CorsProperties.class,
+        MailProperties.class
 })
 public class VakansyaApplication {
 

@@ -3,18 +3,16 @@ package resume.vakansya.auth;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessagePreparator;
 import resume.vakansya.config.AuthProperties;
 import resume.vakansya.entities.OtpChallenge;
 import resume.vakansya.entities.RefreshToken;
 import resume.vakansya.entities.Role;
 import resume.vakansya.entities.User;
+import resume.vakansya.mail.EmailSender;
 import resume.vakansya.repositories.OtpChallengeRepository;
 import resume.vakansya.repositories.RefreshTokenRepository;
 import resume.vakansya.repositories.RoleRepository;
@@ -23,10 +21,7 @@ import resume.vakansya.repositories.UserRepository;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.UUID;
-import jakarta.mail.Message;
-import jakarta.mail.internet.InternetAddress;
 
 @Slf4j
 @Service
@@ -42,28 +37,8 @@ public class CandidateAuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final JavaMailSender mailSender;
+    private final EmailSender emailSender;
     private final EmailOtpTemplateService emailOtpTemplateService;
-
-    @Value("${app.mail.from:}")
-    private String mailFrom;
-
-    @jakarta.annotation.PostConstruct
-    void logMailConfig() {
-        // No secrets in logs: only host/port/username presence and mailFrom domain
-        Object host = "?";
-        Object port = "?";
-        Object username = "?";
-        boolean hasPassword = false;
-        if (mailSender instanceof org.springframework.mail.javamail.JavaMailSenderImpl impl) {
-            host = impl.getHost();
-            port = impl.getPort();
-            username = impl.getUsername();
-            hasPassword = impl.getPassword() != null && !impl.getPassword().isBlank();
-        }
-        log.info("[MAIL CFG] host={} port={} username={} hasPassword={} app.mail.from={}",
-                host, port, username, hasPassword, mailFrom);
-    }
 
     @Transactional
     public void startRegistration(String rawFullName, String rawEmail) {
@@ -372,37 +347,6 @@ public class CandidateAuthService {
     }
 
     private void sendHtmlEmail(String email, String subject, String htmlBody) {
-        long t0 = System.currentTimeMillis();
-        log.info("[SMTP SEND] -> to={} from={} subject={}", email, mailFrom, subject);
-        try {
-            MimeMessagePreparator preparator = mimeMessage -> {
-                if (mailFrom != null && !mailFrom.isBlank()) {
-                    mimeMessage.setFrom(new InternetAddress(mailFrom, "HeadHunter"));
-                }
-                mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(email));
-                mimeMessage.setSubject(subject, "UTF-8");
-                mimeMessage.setContent(htmlBody, "text/html; charset=UTF-8");
-                mimeMessage.setSentDate(new Date());
-                mimeMessage.setHeader("Content-Type", "text/html; charset=UTF-8");
-            };
-            mailSender.send(preparator);
-            log.info("[SMTP SEND] OK to={} elapsedMs={}", email, System.currentTimeMillis() - t0);
-        } catch (Exception e) {
-            // Unwrap to show the root SMTP cause (AuthenticationFailedException, MessagingException, etc.)
-            Throwable root = e;
-            while (root.getCause() != null && root.getCause() != root) {
-                root = root.getCause();
-            }
-            log.error("[SMTP SEND] FAILED to={} elapsedMs={} type={} msg={} rootType={} rootMsg={}",
-                    email,
-                    System.currentTimeMillis() - t0,
-                    e.getClass().getName(),
-                    e.getMessage(),
-                    root.getClass().getName(),
-                    root.getMessage(),
-                    e);
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "email send failed: " + root.getClass().getSimpleName() + ": " + root.getMessage());
-        }
+        emailSender.sendHtml(email, subject, htmlBody);
     }
 }
