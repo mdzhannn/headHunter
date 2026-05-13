@@ -9,6 +9,7 @@ import VacanciesPage from './pages/VacanciesPage';
 import CompaniesPage from './pages/CompaniesPage';
 import DashboardPage from './pages/DashboardPage';
 import AuditPage from './pages/AuditPage';
+import { sockJsUrl } from './wsUrl';
 import { Client, type IMessage } from '@stomp/stompjs';
 import * as SockJSImport from 'sockjs-client';
 
@@ -73,7 +74,7 @@ function AdminShell() {
     if (!token) return;
     let client: Client | null = null;
     client = new Client({
-      webSocketFactory: () => new SockJS('/ws'),
+      webSocketFactory: () => new SockJS(sockJsUrl()),
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },

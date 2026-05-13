@@ -1,6 +1,7 @@
 import { Client, type IMessage } from '@stomp/stompjs';
 import * as SockJSImport from 'sockjs-client';
 import type { ChatMessageDto } from './candidateApi';
+import { sockJsUrl } from '../wsUrl';
 
 type SockCtor = new (url: string) => WebSocket;
 const SockJS = ((SockJSImport as unknown as { default?: SockCtor }).default
@@ -13,7 +14,7 @@ export function connectChatStomp(
   onError?: (err: unknown) => void
 ): Client {
   const client = new Client({
-    webSocketFactory: () => new SockJS('/ws'),
+    webSocketFactory: () => new SockJS(sockJsUrl()),
     connectHeaders: {
       Authorization: `Bearer ${token}`,
     },
