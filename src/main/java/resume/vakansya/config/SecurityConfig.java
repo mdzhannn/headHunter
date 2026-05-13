@@ -28,7 +28,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CorsProperties corsProperties;
+    private final CorsOriginResolver corsOriginResolver;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -39,16 +39,7 @@ public class SecurityConfig {
          * matching differs across Spring versions.
          */
         return request -> {
-            String origin = request.getHeader(HttpHeaders.ORIGIN);
-            if (origin == null || origin.isBlank()) {
-                return null;
-            }
-            CorsConfiguration probe = new CorsConfiguration();
-            probe.setAllowedOriginPatterns(corsProperties.patternsList());
-            String resolved = probe.checkOrigin(origin);
-            if (resolved == null && origin.startsWith("https://") && origin.endsWith(".vercel.app")) {
-                resolved = origin;
-            }
+            String resolved = corsOriginResolver.resolve(request.getHeader(HttpHeaders.ORIGIN));
             if (resolved == null) {
                 return null;
             }
