@@ -12,11 +12,11 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import resume.vakansya.auth.JwtAuthenticationFilter;
 
 import java.util.List;
@@ -32,15 +32,35 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOriginPatterns(corsProperties.patternsList());
-        c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        c.setAllowedHeaders(List.of("*"));
-        c.setAllowCredentials(true);
-        c.setExposedHeaders(List.of("Authorization"));
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", c);
-        return source;
+        /*
+         * Per-request CORS: with allowedOriginPatterns + allowCredentials(true), some stacks
+         * mishandle preflight. We resolve Origin with CorsConfiguration#checkOrigin, then emit
+         * concrete allowedOrigins. Any https://*.vercel.app is accepted even if pattern
+         * matching differs across Spring versions.
+         */
+        return request -> {
+            String origin = request.getHeader(HttpHeaders.ORIGIN);
+            if (origin == null || origin.isBlank()) {
+                return null;
+            }
+            CorsConfiguration probe = new CorsConfiguration();
+            probe.setAllowedOriginPatterns(corsProperties.patternsList());
+            String resolved = probe.checkOrigin(origin);
+            if (resolved == null && origin.startsWith("https://") && origin.endsWith(".vercel.app")) {
+                resolved = origin;
+            }
+            if (resolved == null) {
+                return null;
+            }
+            CorsConfiguration c = new CorsConfiguration();
+            c.setAllowedOrigins(List.of(resolved));
+            c.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
+            c.setAllowedHeaders(List.of("*"));
+            c.setAllowCredentials(true);
+            c.setExposedHeaders(List.of("Authorization"));
+            c.setMaxAge(3600L);
+            return c;
+        };
     }
 
     @Bean
