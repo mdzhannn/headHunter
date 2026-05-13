@@ -1,6 +1,7 @@
 package resume.vakansya.auth;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import jakarta.mail.Message;
 import jakarta.mail.internet.InternetAddress;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CandidateAuthService {
@@ -357,7 +359,8 @@ public class CandidateAuthService {
             };
             mailSender.send(preparator);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "email send failed");
+            log.error("SMTP send failed to={} cause={} msg={}", email, e.getClass().getSimpleName(), e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "email send failed: " + e.getMessage());
         }
     }
 }
