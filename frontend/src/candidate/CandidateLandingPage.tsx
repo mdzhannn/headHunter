@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import DotMatrixBackground from '../components/DotMatrixBackground';
 import { candidateApi, type CandidateVacancyDto } from './candidateApi';
 import { useAuth } from './AuthContext';
 
@@ -208,15 +209,16 @@ export default function CandidateLandingPage() {
         </div>
       </header>
 
-      <section className="relative">
+      <section className="relative overflow-hidden">
+        <DotMatrixBackground rgb="0,180,80" />
         <div
-          className="absolute inset-0 bg-center bg-cover"
+          className="pointer-events-none absolute inset-0 z-[1] bg-center bg-cover"
           style={{
             backgroundImage:
-              'linear-gradient(120deg, rgba(2,6,23,.80), rgba(15,23,42,.65)), url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1900&q=80)',
+              'linear-gradient(120deg, rgba(2,6,23,.82), rgba(15,23,42,.72)), url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1900&q=80)',
           }}
         />
-        <div className="relative max-w-6xl mx-auto px-4 py-10 md:py-14">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 py-10 md:py-14">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-start">
             <div className="space-y-4">
               <h1 className="text-2xl md:text-4xl font-bold text-white max-w-2xl">Работа найдётся для каждого</h1>
