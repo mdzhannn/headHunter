@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import DotMatrixBackground from '../components/DotMatrixBackground';
+import DotMatrixBackground from '@/components/DotMatrixBackground';
 import { candidateApi, type CandidateVacancyDto } from './candidateApi';
 import { useAuth } from './AuthContext';
 
@@ -211,18 +211,15 @@ export default function CandidateLandingPage() {
 
       <section className="relative overflow-hidden">
         <div
-          className="absolute inset-0 z-0 bg-center bg-cover"
-          style={{
-            backgroundImage:
-              'url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1900&q=80)',
-          }}
+          className="absolute inset-0 z-0 bg-gradient-to-br from-slate-950 via-[#0f1c33] to-[#0a1628]"
+          aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-br from-[rgb(2,6,23)]/78 via-slate-950/55 to-[rgb(15,23,42)]/70"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/25 via-transparent to-slate-950/30"
           aria-hidden
         />
         <div className="pointer-events-none absolute inset-0 z-[2] min-h-0">
-          <DotMatrixBackground rgb="0,180,80" />
+          <DotMatrixBackground color="green" spacing={22} mouseRadius={90} />
         </div>
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-10 md:py-14">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-start">

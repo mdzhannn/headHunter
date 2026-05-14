@@ -107,8 +107,8 @@ export default function DashboardPage() {
       <div className="grid lg:grid-cols-2 gap-4 mt-8">
         <Card className="p-4">
           <div className="text-sm font-semibold text-slate-700 mb-3">Регистрации за 30 дней</div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-72 w-full min-h-[288px] min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={260}>
               <LineChart data={stats.registrationsByDay ?? []} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis
@@ -137,8 +137,8 @@ export default function DashboardPage() {
 
         <Card className="p-4">
           <div className="text-sm font-semibold text-slate-700 mb-3">Воронка откликов</div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-72 w-full min-h-[288px] min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={260}>
               <BarChart
                 data={[
                   { stage: 'Всего', value: stats.applicationFunnel?.total ?? 0 },

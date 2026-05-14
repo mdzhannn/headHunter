@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import DotMatrixBackground from '@/components/DotMatrixBackground';
 import { Btn, Card, Input, Toast } from '../components/ui';
 import { candidateApi, type CandidateVacancyDto } from './candidateApi';
 import { useAuth } from './AuthContext';
@@ -316,8 +317,8 @@ export default function CandidateVacanciesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col">
-      <header className="border-b border-[#0a1f47] bg-[#0f2557] sticky top-0 z-20">
+    <div className="min-h-screen bg-[#eff3f9] text-slate-900 flex flex-col relative overflow-x-hidden">
+      <header className="border-b border-[#0a1f47] bg-[#0f2557] sticky top-0 z-20 shrink-0">
         <div className="max-w-6xl mx-auto px-4 py-3 space-y-3">
           <div className="flex items-center gap-3 min-w-0 flex-wrap">
             <Link to="/app" className="font-bold text-xl tracking-tight text-white shrink-0">
@@ -384,8 +385,13 @@ export default function CandidateVacanciesPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto w-full p-4 md:p-6 flex-1 min-w-0">
-        <div className="mb-3 flex items-center justify-between gap-2 lg:hidden sticky top-0 z-10 -mx-4 px-4 py-2 bg-white/90 backdrop-blur border-b border-slate-200">
+      <div className="relative isolate flex min-h-0 flex-1 flex-col">
+        <div className="pointer-events-none absolute inset-0 z-0 min-h-full">
+          <DotMatrixBackground rgb="37,87,167" spacing={22} mouseRadius={90} />
+        </div>
+
+      <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 min-w-0 p-4 md:p-6">
+        <div className="mb-3 flex items-center justify-between gap-2 lg:hidden sticky top-0 z-10 -mx-4 px-4 py-2 bg-[#eff3f9]/90 backdrop-blur border-b border-slate-200/80">
           <button
             type="button"
             className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-[#0f2557] shadow-sm"
@@ -537,7 +543,10 @@ export default function CandidateVacanciesPage() {
       )}
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       </main>
-      <footer className="border-t border-slate-200 py-6 text-center text-sm text-slate-500">© job.kz</footer>
+      <footer className="relative z-10 shrink-0 border-t border-slate-200/90 bg-[#eff3f9]/80 backdrop-blur py-6 text-center text-sm text-slate-500">
+        © job.kz
+      </footer>
+      </div>
     </div>
   );
 }

@@ -7,4 +7,14 @@
   html { overflow-x: clip; }
   body { font-family: 'DM Sans', system-ui, sans-serif; overflow-x: clip; min-width: 0; }
   #root { min-height: 100dvh; min-width: 0; overflow-x: clip; }
+
+  /* View Transitions (если включишь в роутере / браузере) */
+  @supports (view-transition-name: none) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation-duration: 0.25s;
+      animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+    }
+  }
 }

@@ -7,6 +7,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import resume.vakansya.config.CorsProperties;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -14,6 +15,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final StompJwtChannelInterceptor stompJwtChannelInterceptor;
+    private final CorsProperties corsProperties;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -23,8 +25,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        String[] origins = corsProperties.patternsList().toArray(new String[0]);
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("http://localhost:5173", "http://127.0.0.1:5173")
+                .setAllowedOriginPatterns(origins)
                 .withSockJS();
     }
 
