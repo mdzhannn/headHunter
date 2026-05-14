@@ -32,8 +32,8 @@ export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackg
             y: r * spacing,
             phase: Math.random() * Math.PI * 2,
             speed: 0.4 + Math.random() * 0.6,
-            baseAlpha: 0.08 + Math.random() * 0.18,
-            r: 0.8 + Math.random() * 0.7,
+            baseAlpha: 0.14 + Math.random() * 0.22,
+            r: 0.9 + Math.random() * 0.85,
           });
         }
       }
@@ -41,8 +41,10 @@ export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackg
 
     const resize = () => {
       const SPACING = window.innerWidth < 768 ? 30 : 22;
-      canvas!.width = canvas!.offsetWidth;
-      canvas!.height = canvas!.offsetHeight;
+      const w = Math.max(1, canvas.offsetWidth);
+      const h = Math.max(1, canvas.offsetHeight);
+      canvas.width = w;
+      canvas.height = h;
       buildDots(SPACING);
     };
 
@@ -64,10 +66,20 @@ export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackg
       mouse.y = -999;
     };
 
+    let resizeObserver: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      const el = canvas.parentElement;
+      if (el) {
+        resizeObserver = new ResizeObserver(() => resize());
+        resizeObserver.observe(el);
+      }
+    }
+
     window.addEventListener('mousemove', onMove);
     window.addEventListener('blur', onWindowLeave);
     window.addEventListener('resize', resize);
     resize();
+    requestAnimationFrame(resize);
 
     let t = 0;
     const draw = () => {
@@ -75,7 +87,7 @@ export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackg
       t += 0.012;
       for (const d of dots) {
         const pulse = Math.sin(t * d.speed + d.phase);
-        let alpha = d.baseAlpha + pulse * 0.12;
+        let alpha = d.baseAlpha + pulse * 0.18;
         const dx = d.x - mouse.x;
         const dy = d.y - mouse.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -92,6 +104,7 @@ export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackg
 
     return () => {
       cancelAnimationFrame(animId);
+      resizeObserver?.disconnect();
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('blur', onWindowLeave);
       window.removeEventListener('resize', resize);
@@ -101,7 +114,7 @@ export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackg
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+      className="pointer-events-none absolute inset-0 z-0 block h-full min-h-[1px] w-full min-w-[1px]"
       aria-hidden
     />
   );
