@@ -258,10 +258,7 @@ export const api = {
     update: (data: Partial<FrontVacancy>) =>
       req('/vacancy', { method: 'PUT', body: JSON.stringify(mapVacancyToBack(data)) }),
     delete: (id: number) => req(`/vacancy/${id}`, { method: 'DELETE' }),
-    getRawById: async (id: number) => {
-      const data = await req<BackVacancy>(`/vacancy/${id}`);
-      return data;
-    },
+    getRawById: (id: number) => req<BackVacancy>(`/vacancy/${id}`),
     adminApprove: (id: number) =>
       req<BackVacancy>(`/admin/vacancy/${id}/approve`, { method: 'POST' }).then(mapVacancyFromBack),
     adminReject: (id: number, reason: string) =>
