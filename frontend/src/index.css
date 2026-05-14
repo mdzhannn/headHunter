@@ -4,5 +4,7 @@
 
 @layer base {
   * { box-sizing: border-box; }
-  body { font-family: 'DM Sans', system-ui, sans-serif; }
+  html { overflow-x: clip; }
+  body { font-family: 'DM Sans', system-ui, sans-serif; overflow-x: clip; min-width: 0; }
+  #root { min-height: 100dvh; min-width: 0; overflow-x: clip; }
 }

@@ -22,7 +22,7 @@ public class UserServiceImpl implements UserService {
     private final AdminNotificationService adminNotificationService;
     @Override
     public List<UserDto> getAllUsers() {
-        return userMapper.mapToDtoList(userRepository.findAll());
+        return userMapper.mapToDtoList(userRepository.findAllWithResume());
     }
 
     @Override
@@ -47,6 +47,9 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + updUser.getId()));
         existing.setUserName(updUser.getUserName());
         existing.setPassword(updUser.getPassword());
+        if (updUser.getPhone() != null) {
+            existing.setPhone(updUser.getPhone().isBlank() ? null : updUser.getPhone().trim());
+        }
         existing.setActive(updUser.isActive());
         Role role = resolveRole(updUser.getRoleName(), existing.getRole());
         existing.setRole(role);

@@ -108,45 +108,102 @@ export default function CandidateLandingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <header className="border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="font-bold text-xl tracking-tight text-[#2557a7]">job.kz</div>
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          {/* Desktop */}
+          <div className="hidden md:flex items-center gap-3 min-w-0">
+            <div className="font-bold text-xl tracking-tight text-[#2557a7] shrink-0">job.kz</div>
 
-          <div className="mx-auto bg-slate-100 rounded-full p-1 text-sm hidden md:flex">
-            <button className="px-4 py-1.5 rounded-full bg-white shadow-sm font-medium text-[#2557a7]">
-              Ищу работу
-            </button>
-            <Link to="/employer" className="px-4 py-1.5 rounded-full text-slate-600 hover:text-slate-900">
-              Ищу сотрудника
-            </Link>
+            <div className="mx-auto bg-slate-100 rounded-full p-1 text-sm inline-flex shrink-0 min-w-0">
+              <button className="px-4 py-1.5 rounded-full bg-white shadow-sm font-medium text-[#2557a7] whitespace-nowrap">
+                Ищу работу
+              </button>
+              <Link
+                to="/employer"
+                className="px-4 py-1.5 rounded-full text-slate-600 hover:text-slate-900 whitespace-nowrap"
+              >
+                Ищу сотрудника
+              </Link>
+            </div>
+
+            <div className="ml-auto flex items-center gap-2 sm:gap-3 text-sm shrink-0 flex-wrap justify-end">
+              <span className="hidden lg:inline text-slate-600">📍 Алматы</span>
+              {token ? (
+                <>
+                  <Link to="/app/messages" className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
+                    Сообщения
+                  </Link>
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 hover:bg-slate-50"
+                    onClick={() => logout()}
+                  >
+                    Выйти
+                  </button>
+                </>
+              ) : (
+                <Link to="/app/login" className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
+                  Войти
+                </Link>
+              )}
+              <Link
+                to={resumeHref}
+                className="px-3 py-1.5 rounded-lg text-white font-medium whitespace-nowrap"
+                style={{ backgroundColor: hhBlue }}
+              >
+                {token ? 'Создать резюме' : 'Регистрация'}
+              </Link>
+            </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-2 sm:gap-3 text-sm">
-            <span className="hidden sm:inline text-slate-600">📍 Алматы</span>
-            {token ? (
-              <>
-                <Link to="/app/messages" className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
-                  Сообщения
-                </Link>
-                <button
-                  type="button"
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 hover:bg-slate-50"
-                  onClick={() => logout()}
-                >
-                  Выйти
-                </button>
-              </>
-            ) : (
-              <Link to="/app/login" className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
-                Войти
+          {/* Mobile */}
+          <div className="md:hidden flex flex-col gap-3 min-w-0">
+            <div className="flex items-center justify-between gap-3 min-w-0">
+              <div className="font-bold text-xl tracking-tight text-[#2557a7] truncate shrink min-w-0">job.kz</div>
+              <Link
+                to={resumeHref}
+                className="px-3 py-2 rounded-lg text-white font-medium text-sm shrink-0 whitespace-nowrap"
+                style={{ backgroundColor: hhBlue }}
+              >
+                {token ? 'Резюме' : 'Регистрация'}
               </Link>
-            )}
-            <Link
-              to={resumeHref}
-              className="px-3 py-1.5 rounded-lg text-white font-medium"
-              style={{ backgroundColor: hhBlue }}
-            >
-              {token ? 'Создать резюме' : 'Регистрация'}
-            </Link>
+            </div>
+            <div className="bg-slate-100 rounded-full p-1 text-sm flex w-full max-w-md mx-auto">
+              <button
+                type="button"
+                className="flex-1 px-3 py-2 rounded-full bg-white shadow-sm font-medium text-[#2557a7] text-center"
+              >
+                Ищу работу
+              </button>
+              <Link
+                to="/employer"
+                className="flex-1 px-3 py-2 rounded-full text-slate-600 hover:text-slate-900 text-center"
+              >
+                Работодатель
+              </Link>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 justify-between text-sm">
+              <span className="text-slate-500 text-xs shrink-0">📍 Алматы</span>
+              <div className="flex flex-wrap gap-2 justify-end min-w-0">
+                {token ? (
+                  <>
+                    <Link to="/app/messages" className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
+                      Сообщения
+                    </Link>
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 hover:bg-slate-50"
+                      onClick={() => logout()}
+                    >
+                      Выйти
+                    </button>
+                  </>
+                ) : (
+                  <Link to="/app/login" className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">
+                    Войти
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </header>

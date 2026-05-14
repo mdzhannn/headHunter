@@ -12,6 +12,7 @@ public interface UserMapper {
 
     @Mapping(target = "roleName", expression = "java(user.getRole() != null ? user.getRole().getName() : null)")
     @Mapping(target = "adminRoleName", expression = "java(user.getAdminRole() != null ? user.getAdminRole().getName() : null)")
+    @Mapping(target = "email", expression = "java(user.getResume() != null ? user.getResume().getEmail() : null)")
     UserDto mapToDto(User user);
 
     @Mapping(target = "role", ignore = true)

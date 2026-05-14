@@ -98,22 +98,45 @@ export default function UsersPage() {
       {loading ? <Spinner /> : users.length === 0 ? <Empty label="Нет пользователей" /> : (
         <div className="grid gap-3">
           {users.map(u => (
-            <Card key={u.id} className="flex items-center gap-4 px-5 py-4">
-              <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm flex-shrink-0">
-                {u.name?.[0]}{u.surname?.[0]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-900 text-sm">{u.name} {u.surname}</span>
-                  <Badge color="slate">#{u.id}</Badge>
-                  <Badge color="indigo">{u.roleName ?? 'CANDIDATE'}</Badge>
-                  {u.roleName === 'ADMIN' && u.adminRoleName && <Badge color="amber">{u.adminRoleName}</Badge>}
-                  {u.isBlocked && <Badge color="red">Заблокирован</Badge>}
+            <Card key={u.id} className="flex flex-col gap-4 sm:flex-row sm:items-center px-5 py-4">
+              <div className="flex items-start gap-4 min-w-0 flex-1">
+                <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm shrink-0">
+                  {(() => {
+                    const i1 = u.name?.[0]?.toUpperCase() ?? '';
+                    const i2 = u.surname?.[0]?.toUpperCase() ?? '';
+                    const pair = `${i1}${i2}`.trim();
+                    return pair || u.email?.[0]?.toUpperCase() || '?';
+                  })()}
                 </div>
-                <div className="text-xs text-slate-500 mt-0.5">{u.email} · {u.phone}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium text-slate-900 text-sm">
+                      {[u.name, u.surname].filter(Boolean).join(' ') || '—'}
+                    </span>
+                    <Badge color="slate">#{u.id}</Badge>
+                    <Badge color="indigo">{u.roleName ?? 'CANDIDATE'}</Badge>
+                    {u.roleName === 'ADMIN' && u.adminRoleName && <Badge color="amber">{u.adminRoleName}</Badge>}
+                    {u.isBlocked && <Badge color="red">Заблокирован</Badge>}
+                  </div>
+                  <div className="mt-1.5 space-y-0.5 text-xs">
+                    {u.email ? (
+                      <div className="text-slate-700 truncate" title={u.email}>
+                        <span className="text-slate-400 font-medium">Почта </span>
+                        {u.email}
+                      </div>
+                    ) : null}
+                    {u.phone ? (
+                      <div className="text-slate-600 truncate" title={u.phone}>
+                        <span className="text-slate-400 font-medium">Телефон </span>
+                        {u.phone}
+                      </div>
+                    ) : null}
+                    {!u.email && !u.phone ? <div className="text-slate-400">Контакт не указан</div> : null}
+                  </div>
+                </div>
               </div>
               {canManageUsers && (
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex flex-wrap gap-2 shrink-0 sm:justify-end">
                   <select
                     className="px-2 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-700"
                     value={roleDrafts[u.id] ?? (u.roleName ?? 'CANDIDATE')}

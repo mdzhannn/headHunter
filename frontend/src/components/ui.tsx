@@ -121,12 +121,12 @@ export function Card({ children, className = '' }: { children: React.ReactNode; 
 /* ── Section Header ── */
 export function SectionHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between mb-6">
-      <div>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6 min-w-0">
+      <div className="min-w-0">
         <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
         {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
       </div>
-      {action}
+      {action != null && <div className="shrink-0 w-full sm:w-auto [&>*]:max-sm:w-full">{action}</div>}
     </div>
   );
 }
@@ -135,11 +135,15 @@ export function SectionHeader({ title, subtitle, action }: { title: string; subt
 export function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
   React.useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [onClose]);
   return (
-    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium border
-      ${type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
-      <span>{type === 'success' ? '✓' : '✕'}</span>
-      {message}
-      <button onClick={onClose} className="ml-2 opacity-60 hover:opacity-100 text-lg leading-none">×</button>
+    <div
+      className={`fixed z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium border left-4 right-4 mx-auto max-w-lg sm:left-auto sm:right-6 sm:mx-0 bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))]
+      ${type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}
+    >
+      <span className="shrink-0">{type === 'success' ? '✓' : '✕'}</span>
+      <span className="min-w-0 flex-1 break-words">{message}</span>
+      <button type="button" onClick={onClose} className="shrink-0 opacity-60 hover:opacity-100 text-lg leading-none">
+        ×
+      </button>
     </div>
   );
 }
@@ -166,13 +170,15 @@ export function Spinner() {
 /* ── Modal ── */
 export function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="font-semibold text-slate-900">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 max-h-[min(90vh,100dvh)] flex flex-col min-h-0 my-auto">
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-slate-100 shrink-0">
+          <h3 className="font-semibold text-slate-900 min-w-0">{title}</h3>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none shrink-0">
+            ×
+          </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-4 sm:px-6 py-5 overflow-y-auto min-h-0">{children}</div>
       </div>
     </div>
   );

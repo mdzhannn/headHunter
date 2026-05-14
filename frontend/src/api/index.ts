@@ -63,6 +63,8 @@ type BackUser = {
   password?: string;
   active?: boolean;
   isActive?: boolean;
+  phone?: string | null;
+  email?: string | null;
   roleName?: 'CANDIDATE' | 'EMPLOYER' | 'BOTH' | 'ADMIN' | string;
   adminRoleName?: 'SUPER_ADMIN' | 'MODERATOR' | 'SUPPORT' | string | null;
 };
@@ -100,16 +102,30 @@ const splitUserName = (userName?: string) => {
 
 const mapUserFromBack = (u: BackUser): FrontUser => {
   const parsed = splitUserName(u.userName);
+  const login = (u.phone ?? '').trim();
+  const resumeEmail = (u.email ?? '').trim();
+  const loginLooksLikeEmail = login.includes('@');
+  const displayEmail = resumeEmail || (loginLooksLikeEmail ? login : '');
+  const displayPhone = loginLooksLikeEmail ? '' : login;
+
   return {
     id: u.id,
     name: parsed.name || u.userName || '',
     surname: parsed.surname,
-    email: '',
-    phone: '',
+    email: displayEmail,
+    phone: displayPhone,
     isBlocked: !((u.active ?? u.isActive) ?? true),
     roleName: (u.roleName as 'CANDIDATE' | 'EMPLOYER' | 'BOTH' | 'ADMIN' | undefined) ?? 'CANDIDATE',
     adminRoleName: (u.adminRoleName as 'SUPER_ADMIN' | 'MODERATOR' | 'SUPPORT' | null | undefined) ?? null,
   };
+};
+
+const deriveLoginPhoneField = (u: Partial<FrontUser>): string | undefined => {
+  const tel = u.phone?.trim();
+  const mail = u.email?.trim();
+  if (tel) return tel;
+  if (mail) return mail;
+  return undefined;
 };
 
 const mapUserToBack = (u: Partial<FrontUser>) => ({
@@ -119,6 +135,7 @@ const mapUserToBack = (u: Partial<FrontUser>) => ({
   active: !(u.isBlocked ?? false),
   roleName: u.roleName ?? 'CANDIDATE',
   adminRoleName: u.adminRoleName ?? null,
+  phone: deriveLoginPhoneField(u),
 });
 
 const mapResumeFromBack = (r: BackResume): FrontResume => ({
