@@ -209,15 +209,6 @@ export default function CandidateVacanciesPage() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const isAuthed = Boolean(token);
 
-  useEffect(() => {
-    if (!filterSheetOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [filterSheetOpen]);
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -269,6 +260,15 @@ export default function CandidateVacanciesPage() {
       alive = false;
     };
   }, [isAuthed]);
+
+  useEffect(() => {
+    if (!filterSheetOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [filterSheetOpen]);
 
   const categories = useMemo(
     () => Array.from(new Set(list.map((v) => (v.category ?? v.jobTitle ?? '').trim()).filter(Boolean))).slice(0, 10),

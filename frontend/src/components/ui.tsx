@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 /* ── Button ── */
 interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -49,7 +49,7 @@ interface PhoneInputProps {
 export function PhoneInput({ label, value, onChange, disabled, className = '' }: PhoneInputProps) {
   const PREFIX = '+7';
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
+    const raw = e.currentTarget.value;
     // Strip everything except digits from the part after +7
     if (!raw.startsWith(PREFIX)) {
       const digits = raw.replace(/\D/g, '');
@@ -67,9 +67,9 @@ export function PhoneInput({ label, value, onChange, disabled, className = '' }:
     }
   };
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Move cursor after +7 if it's at the start
-    if (e.currentTarget.selectionStart !== null && e.currentTarget.selectionStart < PREFIX.length) {
-      setTimeout(() => e.target.setSelectionRange(PREFIX.length, PREFIX.length), 0);
+    const input = e.currentTarget;
+    if (input.selectionStart !== null && input.selectionStart < PREFIX.length) {
+      setTimeout(() => input.setSelectionRange(PREFIX.length, PREFIX.length), 0);
     }
   };
   const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {

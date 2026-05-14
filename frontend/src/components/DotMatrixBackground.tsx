@@ -6,7 +6,7 @@ type DotMatrixBackgroundProps = {
 };
 
 export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackgroundProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -23,8 +23,8 @@ export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackg
 
     const buildDots = (spacing: number) => {
       dots = [];
-      const cols = Math.ceil(canvas!.width / spacing) + 1;
-      const rows = Math.ceil(canvas!.height / spacing) + 1;
+      const cols = Math.ceil(canvas.width / spacing) + 1;
+      const rows = Math.ceil(canvas.height / spacing) + 1;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           dots.push({
@@ -49,7 +49,7 @@ export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackg
     };
 
     const onMove = (e: MouseEvent) => {
-      const rect = canvas!.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
@@ -83,7 +83,7 @@ export default function DotMatrixBackground({ rgb = '0,180,80' }: DotMatrixBackg
 
     let t = 0;
     const draw = () => {
-      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       t += 0.012;
       for (const d of dots) {
         const pulse = Math.sin(t * d.speed + d.phase);

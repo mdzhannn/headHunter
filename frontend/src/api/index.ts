@@ -300,10 +300,14 @@ export const api = {
       size?: number;
     }) => {
       const sp = new URLSearchParams();
-      if (params.entityType?.trim()) sp.set('entityType', params.entityType.trim());
-      if (params.adminEmail?.trim()) sp.set('adminEmail', params.adminEmail.trim());
-      if (params.from?.trim()) sp.set('from', params.from.trim());
-      if (params.to?.trim()) sp.set('to', params.to.trim());
+      const entityType = params.entityType?.trim();
+      if (entityType) sp.set('entityType', entityType);
+      const adminEmail = params.adminEmail?.trim();
+      if (adminEmail) sp.set('adminEmail', adminEmail);
+      const from = params.from?.trim();
+      if (from) sp.set('from', from);
+      const to = params.to?.trim();
+      if (to) sp.set('to', to);
       sp.set('page', String(params.page ?? 0));
       sp.set('size', String(params.size ?? 20));
       return req<PagedResult<AuditLog>>(`/admin/audit?${sp.toString()}`);
