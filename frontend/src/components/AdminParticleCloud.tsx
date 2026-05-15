@@ -129,14 +129,16 @@ export default function AdminParticleCloud({ className = '' }: { className?: str
     }
 
     function syncSize() {
-      const el = canvas.parentElement;
-      const rw = Math.max(1, Math.floor(el?.clientWidth ?? window.innerWidth));
-      const rh = Math.max(1, Math.floor(el?.clientHeight ?? window.innerHeight));
+      const c = canvasRef.current;
+      if (!c) return;
+      const host = c.parentElement ?? c;
+      const rw = Math.max(1, Math.floor(host.clientWidth || window.innerWidth));
+      const rh = Math.max(1, Math.floor(host.clientHeight || window.innerHeight));
       W = rw;
       H = rh;
-      if (canvas.width !== rw || canvas.height !== rh) {
-        canvas.width = rw;
-        canvas.height = rh;
+      if (c.width !== rw || c.height !== rh) {
+        c.width = rw;
+        c.height = rh;
       }
     }
 
@@ -151,7 +153,8 @@ export default function AdminParticleCloud({ className = '' }: { className?: str
             onResizeHost();
           })
         : null;
-    if (canvas.parentElement) ro?.observe(canvas.parentElement);
+    const observeTarget = canvas.parentElement ?? canvas;
+    ro?.observe(observeTarget);
     window.addEventListener('resize', onResizeHost);
     onResizeHost();
 
