@@ -9,6 +9,7 @@ import VacanciesPage from './pages/VacanciesPage';
 import CompaniesPage from './pages/CompaniesPage';
 import DashboardPage from './pages/DashboardPage';
 import AuditPage from './pages/AuditPage';
+import AdminParticleCloud from './components/AdminParticleCloud';
 import { sockJsUrl } from './wsUrl';
 import { Client, type IMessage } from '@stomp/stompjs';
 import * as SockJSImport from 'sockjs-client';
@@ -104,7 +105,10 @@ function AdminShell() {
   }, [loc.pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="relative min-h-screen flex bg-[#0f2557] overflow-x-hidden">
+      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden>
+        <AdminParticleCloud />
+      </div>
       {mobileNavOpen && (
         <button
           type="button"
@@ -180,8 +184,8 @@ function AdminShell() {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 lg:ml-60">
-        <header className="bg-[#0f2557] border-b border-[#1a3570] px-4 sm:px-8 py-3 sm:py-4 sticky top-0 z-10">
+      <main className="relative z-10 flex flex-col flex-1 min-w-0 min-h-screen lg:ml-60">
+        <header className="bg-[#0f2557] border-b border-[#1a3570] px-4 sm:px-8 py-3 sm:py-4 sticky top-0 z-30 shrink-0 backdrop-blur-[2px]">
           <div className="flex items-center justify-between gap-2 text-sm">
             <div className="flex items-center gap-2 min-w-0">
               <button
@@ -217,7 +221,7 @@ function AdminShell() {
                 )}
               </button>
               {openNotifications && (
-                <div className="absolute right-0 mt-2 w-[min(360px,calc(100vw-2rem))] max-h-[min(420px,70vh)] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl z-20">
+                <div className="absolute right-0 mt-2 w-[min(360px,calc(100vw-2rem))] max-h-[min(420px,70vh)] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl z-40">
                   <div className="px-3 py-2 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Последние уведомления
                   </div>
@@ -244,8 +248,10 @@ function AdminShell() {
           </div>
         </header>
 
-        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-          <Outlet context={{ stats, reloadStats }} />
+        <div className="relative z-[1] flex-1 w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-6 lg:pb-8 max-w-7xl mx-auto">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/98 shadow-[0_12px_60px_-12px_rgba(13,42,107,0.22)] backdrop-blur-sm p-4 sm:p-6 lg:p-8 min-h-[calc(100dvh-10rem)]">
+            <Outlet context={{ stats, reloadStats }} />
+          </div>
         </div>
       </main>
     </div>
