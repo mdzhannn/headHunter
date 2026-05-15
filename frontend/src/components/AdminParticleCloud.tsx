@@ -84,8 +84,9 @@ export default function AdminParticleCloud({ className = '' }: { className?: str
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true } as never);
-    if (!ctx) return;
+    const rawCtx = canvas.getContext('2d', { alpha: true, desynchronized: true } as never);
+    if (!rawCtx) return;
+    const c2d: CanvasRenderingContext2D = rawCtx;
 
     const reduced =
       typeof window !== 'undefined' &&
@@ -111,21 +112,21 @@ export default function AdminParticleCloud({ className = '' }: { className?: str
     }
 
     function paintStaticBackdrop() {
-      ctx.clearRect(0, 0, W, H);
-      const bg = ctx.createLinearGradient(0, 0, W, H);
+      c2d.clearRect(0, 0, W, H);
+      const bg = c2d.createLinearGradient(0, 0, W, H);
       bg.addColorStop(0, '#0a1838');
       bg.addColorStop(1, '#060f24');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, W, H);
+      c2d.fillStyle = bg;
+      c2d.fillRect(0, 0, W, H);
     }
 
     function drawReducedOnce() {
       paintStaticBackdrop();
-      const vignette = ctx.createRadialGradient(W / 2, H / 2, H * 0.12, W / 2, H / 2, H * 0.72);
+      const vignette = c2d.createRadialGradient(W / 2, H / 2, H * 0.12, W / 2, H / 2, H * 0.72);
       vignette.addColorStop(0, 'rgba(15,37,87,0)');
       vignette.addColorStop(1, 'rgba(6,12,26,0.94)');
-      ctx.fillStyle = vignette;
-      ctx.fillRect(0, 0, W, H);
+      c2d.fillStyle = vignette;
+      c2d.fillRect(0, 0, W, H);
     }
 
     function syncSize() {
@@ -179,13 +180,13 @@ export default function AdminParticleCloud({ className = '' }: { className?: str
       rotX += velX * (dtNorm * 1.08);
       rotX = Math.max(-0.55, Math.min(0.55, rotX));
 
-      ctx.clearRect(0, 0, W, H);
-      const bg = ctx.createLinearGradient(0, 0, W, H);
+      c2d.clearRect(0, 0, W, H);
+      const bg = c2d.createLinearGradient(0, 0, W, H);
       bg.addColorStop(0, '#0c1d44');
       bg.addColorStop(0.55, '#0a1838');
       bg.addColorStop(1, '#060f26');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, W, H);
+      c2d.fillStyle = bg;
+      c2d.fillRect(0, 0, W, H);
 
       const sorted: Array<{ proj: { x: number; y: number; s: number }; p: Pt; rz: number }> = [];
       const cosX = Math.cos(rotX);
@@ -226,32 +227,32 @@ export default function AdminParticleCloud({ className = '' }: { className?: str
         const fontSize = Math.max(4, Math.round(p.size * proj.s * 1.72));
 
         if (alpha > 0.52 && depthClamped > 0.62) {
-          ctx.shadowColor = 'rgba(148,187,255,0.45)';
-          ctx.shadowBlur = 3;
+          c2d.shadowColor = 'rgba(148,187,255,0.45)';
+          c2d.shadowBlur = 3;
         } else {
-          ctx.shadowBlur = 0;
+          c2d.shadowBlur = 0;
         }
 
-        ctx.globalAlpha = Math.min(1, alpha);
-        ctx.font = `${fontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace`;
-        ctx.fillStyle = 'rgba(210,226,255,0.95)';
-        ctx.fillText(p.char, proj.x, proj.y);
+        c2d.globalAlpha = Math.min(1, alpha);
+        c2d.font = `${fontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace`;
+        c2d.fillStyle = 'rgba(210,226,255,0.95)';
+        c2d.fillText(p.char, proj.x, proj.y);
       }
-      ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
+      c2d.globalAlpha = 1;
+      c2d.shadowBlur = 0;
 
-      const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.08, W / 2, H / 2, H * 0.76);
+      const vig = c2d.createRadialGradient(W / 2, H / 2, H * 0.08, W / 2, H / 2, H * 0.76);
       vig.addColorStop(0, 'rgba(6,14,34,0)');
       vig.addColorStop(0.65, 'rgba(8,20,52,0.28)');
       vig.addColorStop(1, 'rgba(8,26,74,0.88)');
-      ctx.fillStyle = vig;
-      ctx.fillRect(0, 0, W, H);
+      c2d.fillStyle = vig;
+      c2d.fillRect(0, 0, W, H);
 
-      const cg = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.min(W, H) * 0.42);
+      const cg = c2d.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.min(W, H) * 0.42);
       cg.addColorStop(0, 'rgba(94,154,255,0.035)');
       cg.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = cg;
-      ctx.fillRect(0, 0, W, H);
+      c2d.fillStyle = cg;
+      c2d.fillRect(0, 0, W, H);
     }
 
     if (reduced) {
